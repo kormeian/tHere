@@ -54,6 +54,9 @@ function MyPagePopOver({ onClose }) {
       <Link to={`/bookmark/${id}`}>
         <button type="button">저장한 여정 목록</button>
       </Link>
+      <Link to={`/profile/${id}`}>
+        <button type="button">프로필 수정</button>
+      </Link>
       <Link to="/">
         <button type="button" onClick={handleSignOut}>
           로그아웃

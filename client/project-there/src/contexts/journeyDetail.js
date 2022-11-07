@@ -6,7 +6,7 @@ import React, {
   useMemo,
   useState,
 } from 'react';
-import { SERVER_BASE_URL } from '../lib/constants/serverBaseUrl';
+import { baseAxios } from '../lib/utills/customAxios';
 
 const JourneyDetailValueContext = createContext();
 const JourneyDetailActionsContext = createContext();
@@ -14,15 +14,15 @@ const JourneyDetailActionsContext = createContext();
 const initialState = {
   journeyId: 0,
   memberId: '1',
-  title: '대구에서 한 달 살기',
-  startDate: '2022-10-01',
-  endDate: '2022-10-30',
-  numberOfPeople: 2,
-  disclosure: 'public',
+  title: '',
+  startDate: '',
+  endDate: '',
+  numberOfPeople: 0,
+  disclosure: '',
   journeyThumbnailUrl: '',
-  introductionText: '여행 가고싶다',
-  journeyThemes: ['반려동물', '힐링'],
-  region: '대구',
+  introductionText: '',
+  journeyThemes: [],
+  region: '',
 };
 
 function JourneyDetailProvider({ children }) {
@@ -32,25 +32,17 @@ function JourneyDetailProvider({ children }) {
       if (!jounreyId) {
         throw new Error('journeyId does not exist');
       }
-      
-      const url = `${SERVER_BASE_URL}/journey/detail?journeyId=${jounreyId}`;
 
-      axios
-        .get(url)
+      baseAxios
+        .get(`/journey/detail?journeyId=${jounreyId}`)
         .then(({ data }) => {
           setJourney({ ...data });
-          return true;
         })
         .catch((err) => console.error(err));
     },
 
     updateData(name, value) {
       setJourney((prev) => ({ ...prev, [name]: value }));
-    },
-
-    // 추가한 테스트 코드 (테스트 후 삭제 요망)
-    testSetData(data) {
-      setJourney({ ...data });
     },
   }));
 

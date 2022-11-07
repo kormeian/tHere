@@ -1,6 +1,6 @@
-import React, { createContext, useContext, useMemo, useState } from 'react';
+import React, { createContext, useContext, useMemo, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { authAxios, baseAxios } from '../lib/utills/customAxios';
 
 const PlaceInfoValueContext = createContext();
 const PlaceInfoActionsContext = createContext();
@@ -43,6 +43,39 @@ function PlaceInfoProvider({ children }) {
   const [placeInfo, setPlaceInfo] = useState(InitialPlaceInfo);
   const navigation = useNavigate();
 
+  const makeFormData = useCallback((journeyId, placeId = '') => {
+    const formData = new FormData();
+    const uploadTargetData = { ...placeInfo };
+    let submitPossible = true;
+
+    delete uploadTargetData.imageTakenLocations;
+    const placeKeys = Object.keys(uploadTargetData);
+    placeKeys.forEach((key) => {
+      const placeValue = uploadTargetData[key];
+      if (submitPossible) {
+        if (placeValue === '' || placeValue?.length === 0) {
+          window.alert(`${WarningMatching[key]}를 입력해주세요!`);
+          submitPossible = false;
+        }
+        if (key === 'images') {
+          placeValue.forEach((image) => {
+            console.log(image);
+            formData.append('multipartFile', image);
+          });
+        }
+      }
+    });
+    delete uploadTargetData.images;
+    uploadTargetData.journeyId = journeyId;
+    if (placeId !== '') {
+      uploadTargetData.placeId = Number(placeId);
+    }
+    uploadTargetData.placeTime = uploadTargetData.placeTime.toISOString();
+    console.log(uploadTargetData);
+    formData.append('request', new Blob([JSON.stringify(uploadTargetData)], { type: 'application/json' }));
+    return [formData, submitPossible];
+  }, [placeInfo]);
+
   const actions = useMemo(() => ({
     updateData(key, value) {
       setPlaceInfo((prev) => ({ ...prev, [key]: value }));
@@ -60,36 +93,10 @@ function PlaceInfoProvider({ children }) {
       });
     },
     uploadData(params) {
-      const formData = new FormData();
-      const uploadTargetData = { ...placeInfo };
-      let submitPossible = true;
-
-      delete uploadTargetData.imageTakenLocations;
-      const placeKeys = Object.keys(uploadTargetData);
-      placeKeys.forEach((key) => {
-        const placeValue = uploadTargetData[key];
-        if (submitPossible) {
-          if (placeValue === '' || placeValue?.length === 0) {
-            window.alert(`${WarningMatching[key]}를 입력해주세요!`);
-            submitPossible = false;
-          }
-          if (key === 'images') {
-            placeValue.forEach((image) => { formData.append('multipartFile', image); });
-          }
-        }
-      });
-
-      delete uploadTargetData.images;
-      uploadTargetData.journeyId = params.journeyId;
-      formData.append('request', new Blob([JSON.stringify(uploadTargetData)], { type: 'application/json' }));
+      const [formData, submitPossible] = makeFormData(params.journeyId);
       if (submitPossible) {
-        const url = 'http://onde-bucket.s3.ap-northeast-2.amazonaws.com/place';
-        const config = {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        };
-        axios
+        const url = '/place';
+        authAxios
           .post(url, formData)
           .then((res) => {
             window.alert('제출이 성공적으로 완료되었습니다.');
@@ -98,6 +105,23 @@ function PlaceInfoProvider({ children }) {
           .catch((err) => {
             window.alert(`${err}로 인해 제출에 실패하였습니다.`);
             navigation(`/journey/${params.journeyId}`);
+          });
+      }
+    },
+    updateServerData(params) {
+      const { placeId } = params;
+      const [formData, submitPossible] = makeFormData(placeInfo.journeyId, placeId);
+      if (submitPossible) {
+        const url = '/place';
+        authAxios
+          .put(url, formData)
+          .then((res) => {
+            window.alert('제출이 성공적으로 완료되었습니다.');
+            navigation(`/journey/${placeInfo.journeyId}`);
+          })
+          .catch((err) => {
+            window.alert(`${err}로 인해 제출에 실패하였습니다.`);
+            navigation(`/journey/${placeInfo.journeyId}`);
           });
       }
     },

@@ -12,7 +12,7 @@ import {
 } from './controlRefreshToken';
 
 const http = axios.create({
-  baseURL: 'http://ec2-3-34-2-239.ap-northeast-2.compute.amazonaws.com:8080',
+  baseURL: SERVER_BASE_URL,
 });
 
 // interceptors 때문에 axios 버전 낮춰야 함
@@ -38,6 +38,8 @@ http.interceptors.response.use(
           setAccessToken(accessToken);
           setRefreshToken(refreshToken);
           originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+          console.log(originalRequest);
+
           return axios(originalRequest);
         })
         .catch((err) => {
@@ -65,9 +67,6 @@ export const authAPI = async (accessToken) => {
     return response.data;
   } catch (e) {
     const { errorCode, errorMessage } = e.response.data;
-
-    removeAccessToken();
-    alert('로그인 만료');
     console.log(errorCode);
     console.log(errorMessage);
 
@@ -120,9 +119,12 @@ export const signupAPI = async (userForm) => {
     console.log(userForm);
 
     const value = { ...userForm };
-    if (value.profileImage) {
-      delete value.profileImage;
-    }
+
+    delete value.profileImage;
+    delete value.passwordConfirm;
+
+    console.log('signup API');
+    console.log(value);
 
     const response = await http.post('/members/signup', value);
     return response.data;
@@ -137,13 +139,22 @@ export const updateUserInfoAPI = async (userForm) => {
   try {
     console.log(userForm);
 
-    const formData = new FormData();
     const value = { ...userForm };
+    // 비밀번호 확인 프로퍼티 제거
+    delete value.passwordConfirm;
+    // 프로필 이미지 URL 제거
+    delete value.profileImageUrl;
 
-    if (value.profileImage) {
-      formData.append('multipartFile', value.profileImage);
+    console.log('회원정보 수정 API');
+    console.log(userForm);
+
+    const formData = new FormData();
+
+    // 프로필 이미지 파일이 존재하면 FormData에 추가
+    if (value.profileImageFile) {
+      formData.append('multipartFile', value.profileImageFile);
     }
-    delete value.profileImage;
+    delete value.profileImageFile;
 
     const blob = new Blob([JSON.stringify(value)], {
       type: 'application/json',
@@ -176,6 +187,6 @@ export const signinAPI = async (loginForm) => {
     return response.data;
   } catch (e) {
     console.log(e);
-    throw e;
+    alert('아이디 또는 비밀번호를 다시 확인해주세요.');
   }
 };

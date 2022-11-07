@@ -5,7 +5,7 @@ import Resizer from 'react-image-file-resizer';
 import exifr from 'exifr';
 import styled from 'styled-components';
 import CustomDropZone from './CustomDropZone';
-import { usePlaceInfoActions } from '../../contexts/PlaceInfoContext';
+import { usePlaceInfoActions, usePlaceInfoValue } from '../../contexts/PlaceInfoContext';
 import CarouselItem from './CarouselItem';
 
 const resizeFileToBase64 = (file) => new Promise((resolve) => {
@@ -58,6 +58,7 @@ export default function CustomCarousel({ containerRef }) {
   const [resizedImages, setResizedImages] = useState([]);
   const { updateData } = usePlaceInfoActions();
   const [containerHeight, setContainerHeight] = useState(300);
+  const placeInfo = usePlaceInfoValue();
 
   const addAcceptedImages = (preImages, curImages) => {
     setAcceptedImages([...preImages, ...curImages]);
@@ -65,6 +66,13 @@ export default function CustomCarousel({ containerRef }) {
   const addRejectedImages = (curImages) => {
     setRejectedImages([...curImages]);
   };
+
+  useEffect(() => {
+    if (placeInfo?.images?.length !== 0) {
+      setAcceptedImages(placeInfo?.images);
+    }
+  }, [placeInfo?.images?.length]);
+
   useEffect(() => {
     Promise.all(acceptedImages?.map((image) => resizeFileToBase64(image))).then((result) => {
       setResizedImages(result);
@@ -75,6 +83,7 @@ export default function CustomCarousel({ containerRef }) {
     Promise.all(acceptedImages?.map((image) => exifr.parse(image)))
       .then((result) => {
         let placeVisitedTime = new Date();
+        const presentTime = placeVisitedTime;
         const imageTakenLocations = [];
         const findDuplicate = [];
         result.forEach((info) => {
@@ -94,7 +103,9 @@ export default function CustomCarousel({ containerRef }) {
         if (imageTakenLocations.length !== 0) {
           updateData('imageTakenLocations', imageTakenLocations);
         }
-        updateData('placeTime', placeVisitedTime);
+        if (presentTime !== placeVisitedTime) {
+          updateData('placeTime', placeVisitedTime);
+        }
       });
   }, [acceptedImages]);
 

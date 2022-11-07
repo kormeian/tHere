@@ -25,15 +25,15 @@ const Title = styled.h3`
 `;
 
 function TitleArea() {
-  const { title, region } = useJourneyDetailValue();
+  const { title, region, nickName } = useJourneyDetailValue();
 
   return (
     <Container>
       <button type="button">{region}</button>
       <Title>{title}</Title>
       <div>
-        <span>Img </span>
-        <span>Nickname</span>
+        <span>이미지 </span>
+        <span>{nickName}</span>
       </div>
     </Container>
   );

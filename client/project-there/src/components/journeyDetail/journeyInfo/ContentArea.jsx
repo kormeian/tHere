@@ -5,7 +5,7 @@ import { useJourneyListValue } from '../../../contexts/journeyList';
 import { useNewJourneyValue } from '../../../contexts/newJourney';
 import colors from '../../../lib/constants/colors';
 import CategoryArea from './CategoryArea';
-import IconBox from './IconBox';
+import Bookmark from '../../common/journey/Bookmark';
 
 const { gray300 } = colors;
 
@@ -27,11 +27,11 @@ const TextBox = styled.div`
 `;
 
 function ContentArea() {
-  const { introductionText } = useJourneyDetailValue();
+  const { journeyId, introductionText } = useJourneyDetailValue();
 
   return (
     <Container>
-      <IconBox />
+      <Bookmark journeyId={journeyId} />
       <CategoryArea />
       <TextBox>{introductionText}</TextBox>
     </Container>

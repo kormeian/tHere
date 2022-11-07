@@ -7,6 +7,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 
 public class MemberDto {
@@ -206,7 +207,7 @@ public class MemberDto {
         @Schema(description = "닉네임")
         private String nickName;
 
-        @Pattern(regexp = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*])[0-9a-zA-Z!@#$%^&*]{10,20}$", message = "비밀번호 형식에 맞게 입력 해 주세요!")
+        @NotNull
         @Schema(description = "비밀번호")
         private String password;
     }

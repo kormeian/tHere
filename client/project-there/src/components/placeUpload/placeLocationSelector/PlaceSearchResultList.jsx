@@ -4,6 +4,8 @@ import PlaceSearchResultElement from './PlaceSearchResultElement';
 
 const ResultWrapper = styled.div`
   width : 40%;
+  max-width: 40%;
+  min-width: 30%;
   display: flex;
   flex-direction: column;
 `;
@@ -25,11 +27,10 @@ const SearchInput = styled.input`
 const SearchButton = styled.button`
   background-color : var(--color-green200);
   height: 30%;
-  width: 20%;
-  margin-right: 10px;
+  width: 50px;
   border: 1px solid black;
   position:absolute;
-  right:10px;
+  right: 5%;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -41,7 +42,7 @@ const ResultList = styled.ol`
   display: flex;
   flex-direction: column;
   align-items: center;
-  overflow-y : scroll;
+  overflow : auto;
 `;
 const NoResultWrapper = styled.div`
   margin-top: 10%;
@@ -51,7 +52,7 @@ export default function PlaceSearchResultList({ setPoint, setHover,
   setSelected, setPointAddress }) {
   const { pointPlaces, setPointPlaces } = setPoint;
   const { placeHover, setPlaceHover } = setHover;
-  const { placeSelected, setPlaceSelected } = setSelected;
+  const [placeSelected, setPlaceSelected] = setSelected;
   const [searchOpen, setSearchOpen] = useState(false);
 
   const handleClick = (e) => {

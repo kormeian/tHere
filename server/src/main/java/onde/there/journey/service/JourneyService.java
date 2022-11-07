@@ -34,7 +34,6 @@ import onde.there.place.exception.PlaceErrorCode;
 import onde.there.place.exception.PlaceException;
 import onde.there.place.repository.PlaceRepository;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -126,14 +125,13 @@ public class JourneyService {
 		Member member = memberRepository.findById(memberId)
 			.orElseThrow(() -> new JourneyException(NOT_FOUND_MEMBER));
 
-		PageImpl<MyListResponse> MyListResponses = new PageImpl<>(
-			journeyRepository.myList(memberId, pageable).stream()
-				.map(MyListResponse::fromEntity).collect(
-					Collectors.toList()));
+		Page<Journey> journeys = journeyRepository.myList(memberId, pageable);
 
 		log.info("myList() : 조회 완료");
 
-		return MyListResponses;
+		return journeys.map(
+			MyListResponse::fromEntity
+		);
 	}
 
 	@Transactional
@@ -142,14 +140,14 @@ public class JourneyService {
 
 		log.info("filteredList() : 호출");
 
-		PageImpl<FilteringResponse> filteringResponses = new PageImpl<>(
-			journeyRepository.searchAll(filteringRequest, pageable).stream()
-				.map(FilteringResponse::fromEntity).collect(
-					Collectors.toList()));
+		Page<Journey> journeys = journeyRepository.searchAll(filteringRequest,
+			pageable);
 
 		log.info("filteredList() : 종료");
 
-		return filteringResponses;
+		return journeys.map(
+			FilteringResponse::fromEntity
+		);
 
 	}
 

@@ -3,16 +3,18 @@ import React, { createContext, useContext, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SERVER_BASE_URL } from '../lib/constants/serverBaseUrl';
 import { addDatas } from '../lib/utills';
+import { getAccessToken } from '../lib/utills/controlAccessToken';
+import { authAxios } from '../lib/utills/customAxios';
 
 const NewJourneyValueContext = createContext();
 const NewJourneyActionsContext = createContext();
 
 const initialState = {
-  memberId: 'memberId',
+  memberId: '',
   title: '',
   startDate: '',
   endDate: '',
-  numberOfPeople: 2,
+  numberOfPeople: 1,
   disclosure: 'public',
   thumbnail: [],
   introductionText: '',
@@ -31,9 +33,34 @@ function NewJourneyProvider({ children }) {
         setJourneyInfo((prev) => ({ ...prev, [name]: value }));
       },
 
-      addNewJourney(newJourney) {
-        const journeyId = addDatas(newJourney, `${SERVER_BASE_URL}/journey`);
-        if (journeyId) navigate(`/journey/${journeyId}`);
+      async addNewJourney(newJourney) {
+        try {
+          const formData = new FormData();
+          const value = { ...newJourney };
+
+          if (value.thumbnail) {
+            formData.append('thumbnail', value.thumbnail);
+            delete value.thumbnail;
+          }
+
+          const blob = new Blob([JSON.stringify(value)], {
+            type: 'application/json',
+          });
+          formData.append('request', blob);
+
+          const config = {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+              Authorization: `Bearer ${getAccessToken()}`,
+            },
+          };
+
+          const { data } = await authAxios.post('/journey', formData, config);
+
+          return data?.journeyId;
+        } catch (err) {
+          alert(err);
+        }
       },
 
       // 미선택 항목 여부 체크하는 함수
@@ -52,8 +79,6 @@ function NewJourneyProvider({ children }) {
         const value = { ...newJourney };
         delete value.journeyThumbnailUrl;
 
-        const url = `${SERVER_BASE_URL}/journey`;
-
         if (value.thumbnail) {
           formData.append('thumbnail', value.thumbnail[0]);
         }
@@ -70,8 +95,8 @@ function NewJourneyProvider({ children }) {
           },
         };
 
-        axios
-          .patch(url, formData, config)
+        authAxios
+          .patch('/journey', formData, config)
           .then(({ data }) => {
             console.log(data);
             alert('수정 성공!');

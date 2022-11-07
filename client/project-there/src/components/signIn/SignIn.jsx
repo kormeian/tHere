@@ -3,64 +3,88 @@ import styled from 'styled-components';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
 import { Cookies } from 'react-cookie';
+import { FaGoogle } from 'react-icons/fa';
 import { setRefreshToken } from '../../lib/utills/controlRefreshToken';
 import { setAccessToken } from '../../lib/utills/controlAccessToken';
 import { signinAPI } from '../../lib/utills/http';
 
 const Wrapper = styled.div`
-  width: 100%;
-  padding-top: 100px;
-  font-size: var(--font-small);
+  display: flex;
+  justify-content: center;
 `;
 
 const Form = styled.form`
-  margin: 0 auto;
-  margin-bottom: 16px;
-  width: 30%;
-  padding: 20px 20px;
+  padding-top: 220px;
+  font-size: var(--font-small);
+
+  width: 280px;
+  overflow: hidden;
 `;
 
 const InputLabel = styled.div`
-  padding: 8px 8px 8px 0;
-  width: 80%;
   margin: 0 auto;
+  margin-bottom: 4px;
+  font-size: var(--font-micro);
+  color: var(--color-gray500);
 `;
 
 const H2 = styled.h2`
   text-align: center;
-  margin-bottom: 24px;
-  font-size: var(--font-regular);
+  margin-bottom: 72px;
+  font-size: var(--font-medium);
+  font-weight: var(--weight-light);
 `;
 
 const SignInButton = styled.button`
   display: block;
-  width: 80%;
-  margin: 18px auto;
-  padding: 8px 0;
+  margin: 16px auto;
+  padding: 8px 24px;
   font-size: var(--font-small);
-  background-color: var(--color-green100);
+  background-color: var(--color-green200);
   color: var(--color-gray100);
-  font-weight: var(--weight-bold);
   border: none;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
 `;
 
 const Row = styled.div`
-  display: flex;
+  position: relative;
+  width: 100%;
   margin: 0 auto;
-  margin-bottom: 18px;
-  padding: 8px;
-  width: 80%;
+  margin-bottom: 32px;
 `;
 
 const TextInput = styled.input`
-  width: 70%;
-  padding: 8px;
-  border: 0.5px solid var(--color-green100);
-  font-size: 1em;
+  width: 100%;
+  padding: 8px 0;
+  border: 0;
+  border-bottom: 1px solid var(--color-green200);
+  background: none;
+  font-size: var(--font-small);
 
-  &:focus {
-    outline: none;
-    border: 1px solid #51a863;
+  &:-webkit-autofill {
+    -webkit-box-shadow: 0 0 0 1000px var(--color-gray100) inset;
+    box-shadow: 0 0 0 1000px var(--color-gray100) inset;
+    -webkit-text-fill-color: var(--color-green200);
+  }
+`;
+
+const SignUpLink = styled.div`
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+  color: var(--color-gray500);
+  font-size: var(--font-micro);
+  margin-top: -16px;
+  margin-bottom: 60px;
+
+  & strong {
+    font-weight: var(--weight-semi-bold);
   }
 `;
 
@@ -124,13 +148,20 @@ function SignIn() {
             onChange={handleChangeForm}
           />
         </Row>
-        <Row>
-          <span>회원이 아니신가요?</span>
-          <Link to="/signup">회원가입</Link>
-        </Row>
-        <SignInButton onClick={handleClickLogin}>로그인</SignInButton>
-        <a href="http://localhost:8080/oauth2/authorization/google">
-          <SignInButton type="button">구글 로그인</SignInButton>
+        <SignUpLink>
+          <span>회원이 아니신가요? </span>
+          <Link to="/signup">
+            <strong>회원가입</strong>
+          </Link>
+        </SignUpLink>
+
+        <SignInButton type="button" onClick={handleClickLogin}>
+          로그인
+        </SignInButton>
+        <a href="http://ec2-3-34-2-239.ap-northeast-2.compute.amazonaws.com:8080/oauth2/authorization/google">
+          <SignInButton type="button">
+            <FaGoogle />
+          </SignInButton>
         </a>
       </Form>
     </Wrapper>

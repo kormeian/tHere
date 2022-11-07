@@ -39,7 +39,6 @@ const filterSearchPlaceList = (targetList) => {
 
   return result;
 };
-
 const makePlaceInfoLocation = (selectedInfo) => {
   const keyList = [
     'placeName',
@@ -63,10 +62,25 @@ const makePlaceInfoLocation = (selectedInfo) => {
   ];
   return [keyList, valueList];
 };
-
+const findPointLocation = async (pointAddress) => {
+  const results = await Promise.all(
+    pointAddress?.map((address) => addressToPlaceNameSearch(address)));
+  const newResult = results.flat(1);
+  let resultData = [];
+  if (newResult.length !== 0) {
+    resultData = newResult?.map((result) => {
+      const placeName = result.place_name;
+      const addressName = result.address_name;
+      const latitude = result.y;
+      const longitude = result.x;
+      return [placeName, addressName, latitude, longitude];
+    });
+  }
+  return resultData;
+};
 export {
   coord2AddressSearch,
-  addressToPlaceNameSearch,
   filterSearchPlaceList,
   makePlaceInfoLocation,
+  findPointLocation,
 };

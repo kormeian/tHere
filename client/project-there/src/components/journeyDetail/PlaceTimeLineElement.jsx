@@ -53,6 +53,7 @@ export default function PlaceTimeLineElement({ target, focusedPlace }) {
     <StyledVerticalTimelineElement
       contentStyle={{
         height: '60vh',
+        minHeight: '560px',
         width: '90%',
         background: 'none',
         position: 'relative',

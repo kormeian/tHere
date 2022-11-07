@@ -19,7 +19,7 @@ const { gray100, green300 } = colors;
 const Container = styled.div`
   position: relative;
   width: 100%;
-  padding: 140px 100px;
+  padding: 10vh 5vw;
   background: ${gray100};
   color: ${green300};
   height: 100vh;
@@ -61,11 +61,12 @@ const ViewMore = styled.div`
   }
 `;
 
-function JourneyInfo({ journeyId }) {
+function JourneyInfo({ journeyId, controlNickName }) {
   const journeyInfo = useNewJourneyValue();
   const { initDatas } = useNewJourneyActions();
   const { getDatas, updateData, testSetData } = useJourneyDetailActions();
   const journey = useJourneyDetailValue();
+  const [nickName, setNickName] = controlNickName;
 
   const [visible, setVisible] = useState(false);
   const [popOver, setPopOver] = useState(false);
@@ -81,6 +82,9 @@ function JourneyInfo({ journeyId }) {
   // 데이터 받아온 후 화면에 보여주기
   useEffect(() => {
     if (journey.journeyId) {
+      if (journey.nickName !== nickName) {
+        setNickName(journey.nickName);
+      }
       setVisible(true);
     }
   }, [journey.journeyId]);
@@ -103,20 +107,6 @@ function JourneyInfo({ journeyId }) {
           </div>
         </Container>
       )}
-      {/* <Container>
-        <TitleArea />
-        <ContentArea />
-        <div>
-          <button
-            type="button"
-            className="btnViewMore"
-            onClick={handleOpenPopOver}
-          >
-            더보기
-          </button>
-          {popOver && <ViewMorePopOver journeyId={journeyId} />}
-        </div>
-      </Container> */}
     </NewJourneyProvider>
   );
 }

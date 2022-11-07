@@ -8,6 +8,7 @@ import {
   useJourneyDetailValue,
 } from '../../../contexts/journeyDetail';
 import { useNewJourneyActions } from '../../../contexts/newJourney';
+import { authAxios } from '../../../lib/utills/customAxios';
 
 const BtnContainer = styled.div`
   position: absolute;
@@ -44,10 +45,8 @@ function ViewMorePopOver({ journeyId }) {
   const navigate = useNavigate();
 
   const deleteDatas = useCallback(() => {
-    const url = `http://localhost:8080/journey?journeyId=${journeyId}`;
-
-    axios
-      .delete(url)
+    authAxios
+      .delete(`/journey?journeyId=${journeyId}`)
       .then((res) => {
         console.log(res);
         alert('삭제가 완료되었습니다.');
@@ -56,17 +55,17 @@ function ViewMorePopOver({ journeyId }) {
   });
 
   const handleEditBtnClick = () => {
-    // if (id !== journey.memberId) {
-    //   return alert('수정 권한이 없습니다.');
-    // }
+    if (id !== journey.memberId) {
+      return alert('수정 권한이 없습니다.');
+    }
 
     navigate(`/journey/update/${journeyId}`);
   };
 
   const handleDeleteBtnClick = () => {
-    // if (id !== journey.memberId) {
-    //   return alert('삭제 권한이 없습니다.');
-    // }
+    if (id !== journey.memberId) {
+      return alert('삭제 권한이 없습니다.');
+    }
 
     deleteDatas();
     navigate('/');

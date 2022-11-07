@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { authAxios } from '../../lib/utills/customAxios';
 
 const ButtonHolder = styled.div`
   position: absolute;
@@ -50,12 +50,12 @@ export default function PlaceReviseButton({ target }) {
   };
 
   const handleDelete = () => {
-    const url = `http://ec2-18-183-58-95.ap-northeast-1.compute.amazonaws.com:8080/place?placeId=${target.placeId}`;
+    const url = `/place?placeId=${target.placeId}`;
     const navigationPath = `/journey/${target.journeyId}`;
-    axios
+    authAxios
       .delete(url)
       .then((res) => {
-        window.alert(`${target.placeId}가 성공적으로 제거되었습니다.`);
+        window.alert(`장소 ${target.placeId}이 성공적으로 제거되었습니다.`);
         window.location.reload();
       })
       .catch((err) => {

@@ -2,6 +2,8 @@ import { React, Suspense, lazy } from 'react';
 import { Route, Routes } from 'react-router-dom';
 import { Reset } from 'styled-reset';
 import RequireAuth from './components/common/RequireAuth';
+import Oauth2Redirect from './components/signIn/Oauth2Redirect';
+import ProfileEditPage from './pages/ProfileEditPage';
 import GlobalStyle from './styles/global';
 
 const TestPage = lazy(() => import('./pages/TestPage'));
@@ -71,7 +73,17 @@ function App() {
           />
 
           <Route path="/signin" element={<SignInPage />} />
+          <Route path="/oauth2/redirect" element={<Oauth2Redirect />} />
           <Route path="/signup" element={<SignUpPage />} />
+
+          <Route
+            path="/profile/:memberId"
+            element={
+              <RequireAuth>
+                <ProfileEditPage />
+              </RequireAuth>
+            }
+          />
 
           <Route path="/test" element={<TestPage />} />
         </Route>

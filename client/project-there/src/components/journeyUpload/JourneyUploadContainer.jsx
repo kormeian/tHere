@@ -7,6 +7,7 @@ import {
 } from '../../contexts/newJourney';
 import ContentsEditor from './ContentsEditor';
 import ThumbsUploader from './ThumbsUploader';
+import { useAuthValue } from '../../contexts/auth';
 
 const JourneyFormBox = styled.form`
   position: relative;
@@ -38,22 +39,29 @@ const SubmitBtnContainer = styled.div`
 
 const JourneyUploadContainer = React.memo(() => {
   const journeyInfo = useNewJourneyValue();
-  const { addNewJourney, initDatas, hasEmptyValue } = useNewJourneyActions();
+  const { updateData, addNewJourney, initDatas, hasEmptyValue } =
+    useNewJourneyActions();
+  const { id } = useAuthValue();
 
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     hasEmptyValue(journeyInfo);
 
-    addNewJourney(journeyInfo);
-    // navigate('/journey');
+    const newJourneyId = await addNewJourney(journeyInfo);
+    if (newJourneyId) navigate(`/journey/${newJourneyId}`);
   };
 
   const handleCancel = () => {
     navigate(-1);
   };
+
+  useEffect(() => {
+    // memberId 반영
+    updateData('memberId', id);
+  }, [id]);
 
   useEffect(
     () => () => {

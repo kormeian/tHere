@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { useJourneyDetailActions } from '../../contexts/journeyDetail';
+import Bookmark from '../common/journey/Bookmark';
 
 const JourneyItem = styled.div`
   position: relative;
@@ -21,6 +22,7 @@ const ThumbnailBox = styled.div`
   width: 300px;
   height: 300px;
   margin-bottom: 18px;
+  overflow: hidden;
   cursor: pointer;
 
   & img {
@@ -28,33 +30,23 @@ const ThumbnailBox = styled.div`
     background: var(--color-gray300);
     width: 100%;
     height: 100%;
-    padding: 12px;
   }
 `;
 
 const InfoBox = styled.div`
-  & .title {
+  & > div:first-child {
     font-size: 21px;
     margin-bottom: 8px;
     cursor: pointer;
   }
-
-  & .region {
-    margin-top: 14px;
-
-    & button {
-      background: var(--color-green200);
-      color: var(--color-gray100);
-    }
-  }
 `;
 
-const HeartBox = styled.div`
-  position: absolute;
-  top: 58px;
-  right: 12px;
-  font-size: var(--font-micro);
-`;
+// const Bookmark = styled.div`
+//   position: absolute;
+//   top: 58px;
+//   right: 12px;
+//   font-size: var(--font-micro);
+// `;
 
 function JourneyCard({
   journeyId,
@@ -68,21 +60,22 @@ function JourneyCard({
   const handleClickCard = () => {
     navigate(`journey/${journeyId}`);
   };
+
   return (
-    <JourneyItem onClick={handleClickCard}>
+    <JourneyItem>
       <RegionBox>
         <button type="button" key={region}>
           {region}
         </button>
       </RegionBox>
-      <ThumbnailBox>
+      <ThumbnailBox onClick={handleClickCard}>
         <img src={journeyThumbnailUrl} alt="썸네일" />
       </ThumbnailBox>
       <InfoBox>
-        <div className="title">{title}</div>
+        <div>{title}</div>
         <div>{`by ${memberId}`}</div>
       </InfoBox>
-      <HeartBox>좋아요 개수</HeartBox>
+      <Bookmark journeyId={journeyId} />
     </JourneyItem>
   );
 }

@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import encodeFileToBase64 from '../../lib/utills/encodeFileToBase64';
@@ -10,70 +10,71 @@ import {
 } from '../../lib/utills/http';
 
 const Wrapper = styled.div`
-  width: 100%;
-  padding-top: 100px;
-  font-size: var(--font-small);
+  display: flex;
+  justify-content: center;
 `;
 
 const Form = styled.form`
-  margin: 0 auto;
-  margin-bottom: 16px;
-  width: 30%;
-  padding: 20px 20px;
+  padding-top: 150px;
+  font-size: var(--font-small);
+
+  width: 330px;
+  overflow: hidden;
 `;
 
 const InputLabel = styled.div`
-  padding: 8px 8px 8px 0;
-  width: 80%;
   margin: 0 auto;
+  margin-bottom: 4px;
+  font-size: var(--font-micro);
+  color: var(--color-gray500);
 `;
 
 const H2 = styled.h2`
   text-align: center;
-  margin-bottom: 24px;
-  font-size: var(--font-regular);
+  margin-bottom: 72px;
+  font-size: var(--font-medium);
+  font-weight: var(--weight-light);
 `;
 
 const SignUpButton = styled.button`
   display: block;
-  width: 80%;
   margin: 48px auto 24px;
-  padding: 8px 0;
+  padding: 8px 24px;
   font-size: var(--font-small);
-  background-color: var(--color-green100);
+  background-color: var(--color-green200);
   color: var(--color-gray100);
-  font-weight: var(--weight-bold);
   border: none;
 `;
 
 const Row = styled.div`
-  display: flex;
+  position: relative;
+  width: 100%;
   margin: 0 auto;
-  margin-bottom: 18px;
-  padding: 8px;
-  width: 80%;
+  margin-bottom: 48px;
 `;
 
 const TextInput = styled.input`
-  width: 70%;
-  padding: 8px;
-  border: 0.5px solid var(--color-green100);
-  font-size: 1em;
+  width: 100%;
+  padding: 8px 0;
+  border: 0;
+  border-bottom: 1px solid var(--color-green200);
+  background: none;
+  font-size: var(--font-small);
 
-  &:focus {
-    outline: none;
-    border: 1px solid #51a863;
-  }
-
-  &[type='file'] {
-    display: none;
+  &:-webkit-autofill {
+    -webkit-box-shadow: 0 0 0 1000px var(--color-gray100) inset;
+    box-shadow: 0 0 0 1000px var(--color-gray100) inset;
+    -webkit-text-fill-color: var(--color-green200);
   }
 `;
 
 const CheckButton = styled.button`
-  width: 20%;
   line-height: 1;
-  padding: 8px;
+  padding: 8px 14px;
+  position: absolute;
+  right: 0;
+  color: 0.5px solid var(--color-green200);
+  border: 0.5px solid var(--color-green200);
 
   &:hover {
     cursor: pointer;
@@ -82,15 +83,19 @@ const CheckButton = styled.button`
 
 const ValidationErrMsg = styled.div`
   color: red;
+  position: absolute;
+  bottom: -21px;
+  left: 0;
+  font-size: var(--font-micro);
 `;
 
 const validationErrorMessage = {
-  id: '잘못된 아이디 형식입니다.',
-  password: '잘못된 비밀번호 형식입니다.',
+  id: '영문/숫자, 1개 이상의 영문 포함 (4~60자)',
+  password: '대문자/소문자/숫자/특수문자, 각각 1개 이상 포함 (10~20자)',
   passwordConfirm: '비밀번호가 일치하지 않습니다.',
   email: '잘못된 이메일 형식입니다.',
-  name: '잘못된 이름 형식입니다.',
-  nickName: '잘못된 닉네임 형식입니다.',
+  name: '한글 (2~5자)',
+  nickName: '한글/영문/숫자 (2~10자)',
 };
 
 // 미입력 값 확인 메세지
@@ -103,11 +108,7 @@ const emptyValueErrorMessage = {
   passwordConfirm: '비밀번호 확인이 입력되지 않았습니다.',
 };
 
-function SignUp() {
-  // 파일업로드 UI 커스텀 하기 위해 hidden으로 숨기고 ref를 이용하여 호출하기 위한 코드
-  const fileInput = useRef();
-  const [imageSrc, setImageSrc] = useState('');
-
+function SignUp({ info }) {
   // 아이디, 이메일 인증 완료 시에만 데이터 전송 가능
   const [checkId, setCheckId] = useState(false);
   const [checkEmail, setCheckEmail] = useState(false);
@@ -131,6 +132,19 @@ function SignUp() {
     nickName: '',
     // profileImage: null,
   });
+
+  useEffect(() => {
+    if (!info) return;
+
+    console.log(info.name);
+    console.log(info.email);
+
+    setUserForm((prev) => ({
+      ...prev,
+      name: info.name,
+      email: info.email,
+    }));
+  }, []);
 
   // 이메일 인증 요청 성공 시 로그인 페이지로 이동해주는 함수
   const navigate = useNavigate();
@@ -258,28 +272,6 @@ function SignUp() {
     }
   };
 
-  // 이미지 업로드
-  const handleUploadImage = ({ target }) => {
-    if (!target.files) return;
-
-    console.log(target.files[0]);
-    // setImageSrc(target.files[0].name);
-    encodeFileToBase64(target.files[0], setImageSrc);
-
-    setUserForm((prev) => ({
-      ...prev,
-      [target.name]: target.files[0],
-    }));
-  };
-
-  // 이미지 업로드 버튼을 클릭하면 숨겨뒀던 파일 업로드가 클릭되게 한다.
-  const handleClickImgUploadBtn = (e) => {
-    if (!fileInput?.current) return;
-
-    e.preventDefault();
-    fileInput?.current.click();
-  };
-
   // 중복 확인 함수 (아이디, 이메일에 적용할)
   const checkIsAvailable = async (item, checkAPI, setState) => {
     try {
@@ -322,12 +314,12 @@ function SignUp() {
 
   return (
     <Wrapper>
-      <H2>회원가입</H2>
+      {/* <H2>회원가입</H2> */}
       <Form>
         <InputLabel>아이디</InputLabel>
         <Row>
           <TextInput
-            placeholder="아이디"
+            placeholder="ID"
             name="id"
             onChange={handleChangeForm}
             onBlur={handleIdValidation}
@@ -335,12 +327,13 @@ function SignUp() {
           <CheckButton onClick={handleCheckId}>중복확인</CheckButton>
           {idMessage && <ValidationErrMsg>{idMessage}</ValidationErrMsg>}
         </Row>
+        {/* {idMessage && <ValidationErrMsg>{idMessage}</ValidationErrMsg>} */}
 
         <InputLabel>비밀번호</InputLabel>
         <Row>
           <TextInput
             type="password"
-            placeholder="비밀번호"
+            placeholder="password"
             name="password"
             onChange={handleChangeForm}
             onBlur={handlePasswordValidation}
@@ -354,7 +347,7 @@ function SignUp() {
         <Row>
           <TextInput
             type="password"
-            placeholder="비밀번호 확인"
+            placeholder="password confirm"
             name="passwordConfirm"
             onChange={handleChangeForm}
             onBlur={handlePasswordConfirmValidation}
@@ -367,8 +360,9 @@ function SignUp() {
         <InputLabel>이메일</InputLabel>
         <Row style={{ justifyContent: 'space-between' }}>
           <TextInput
-            placeholder="이메일"
+            placeholder="email"
             name="email"
+            value={userForm.email}
             onChange={handleChangeForm}
             onBlur={handleEmailValidation}
           />
@@ -378,8 +372,9 @@ function SignUp() {
         <InputLabel>이름</InputLabel>
         <Row>
           <TextInput
-            placeholder="이름"
+            placeholder="name"
             name="name"
+            value={userForm.name}
             onChange={handleChangeForm}
             onBlur={handlNameValidation}
           />
@@ -388,7 +383,7 @@ function SignUp() {
         <InputLabel>닉네임</InputLabel>
         <Row style={{ justifyContent: 'space-between' }}>
           <TextInput
-            placeholder="닉네임"
+            placeholder="nickname"
             name="nickName"
             onChange={handleChangeForm}
             onBlur={handlNickNameValidation}
@@ -398,20 +393,6 @@ function SignUp() {
             <ValidationErrMsg>{nickNameMessage}</ValidationErrMsg>
           )}
         </Row>
-        {/* <InputLabel>프로필 이미지</InputLabel>
-        <Row>
-          <TextInput
-            type="file"
-            accept="image/*"
-            ref={fileInput}
-            name="profileImage"
-            onChange={handleUploadImage}
-          />
-          <button type="button" onClick={handleClickImgUploadBtn}>
-            이미지 업로드
-          </button>
-          {imageSrc && <img src={imageSrc} alt="" />}
-        </Row> */}
         <SignUpButton onClick={handleClickSignUp}>회원가입</SignUpButton>
       </Form>
     </Wrapper>

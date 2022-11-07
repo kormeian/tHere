@@ -25,9 +25,9 @@ const addDatas = (datas, url) => {
     },
   };
 
-  // 토큰 유무 확인
-  const accessToken = getAccessToken();
-  if (accessToken) config.headers.Authorization = `Bearer ${accessToken}`;
+  // // 토큰 유무 확인
+  // const accessToken = getAccessToken();
+  // if (accessToken) config.headers.Authorization = `Bearer ${accessToken}`;
 
   axios
     // url로 formData를 config에 맞게 전송

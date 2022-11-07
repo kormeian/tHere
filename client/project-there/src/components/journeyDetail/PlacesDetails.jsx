@@ -10,14 +10,14 @@ const PlacesDetailsHolder = styled.div`
   width: 100%;
   height: 60%;
   .vertical-timeline {
-    padding-left: 100px;
+    padding-left: 5vw;
     padding-top: 0px;
   }
 `;
 const StyledVerticalTimeline = styled(VerticalTimeline)`
   ::before {
     width: 2px !important;
-    margin-left: 100px;
+    margin-left: 5vw;
   }
 `;
 
@@ -40,7 +40,6 @@ export default function PlacesDetails({ focusedPlace, hover }) {
     if (!targetPlacesData) {
       return;
     }
-    console.log('targetPlacesData', targetPlacesData);
     if (targetPlacesData.length !== 0) {
       let preDate = targetPlacesData[0].placeTime.slice(0, 10);
       let elapsedTime = 1;

@@ -5,6 +5,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import onde.there.domain.Member;
 import onde.there.dto.member.MemberDto;
+import onde.there.member.exception.MemberException;
+import onde.there.member.exception.type.MemberErrorCode;
 import onde.there.member.security.jwt.TokenMemberId;
 import onde.there.member.service.MemberService;
 import org.springframework.http.MediaType;
@@ -12,6 +14,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -64,6 +69,9 @@ public class MemberController {
 
     @GetMapping("/auth")
     public ResponseEntity<?> auth(@TokenMemberId String memberId) {
+        if (memberId == null) {
+            throw new MemberException(MemberErrorCode.AUTHORIZATION_HEADER_NOT_EMPTY);
+        }
         log.info("auth request memberId => {}", memberId);
         return ResponseEntity.ok(memberService.auth(memberId));
     }
@@ -76,9 +84,28 @@ public class MemberController {
 
     @PatchMapping(consumes = {MediaType.MULTIPART_FORM_DATA_VALUE, MediaType.APPLICATION_JSON_VALUE})
     public ResponseEntity<?> update(@Validated @RequestPart MultipartFile multipartFile,
-                                    @Validated @RequestPart MemberDto.UpdateRequest updateRequest) {
+                                    @Validated @RequestPart MemberDto.UpdateRequest updateRequest,
+                                    @TokenMemberId String memberId) {
+        if (memberId == null) {
+            throw new MemberException(MemberErrorCode.AUTHORIZATION_HEADER_NOT_EMPTY);
+        }
+
         log.info("member update request => {}", updateRequest);
+
+        if (!updateRequest.getId().equals(memberId)) {
+            throw new MemberException(MemberErrorCode.AUTHORITY_ERROR);
+        }
+
+        String password = updateRequest.getPassword().trim();
+        Matcher matcher = Pattern.compile("^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*])[0-9a-zA-Z!@#$%^&*]{10,20}$")
+                .matcher(password);
+
+        if (!password.equals("") && !matcher.matches()){
+            throw new MemberException(MemberErrorCode.BAD_REQUEST);
+        }
+
         Member member = memberService.update(multipartFile, updateRequest);
+
         return ResponseEntity.ok(MemberDto.AuthResponse.builder()
                         .id(member.getId())
                         .name(member.getName())

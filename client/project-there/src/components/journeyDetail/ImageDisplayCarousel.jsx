@@ -22,7 +22,7 @@ export default function ImageDisplayCarousel({ images, containerRef }) {
       {images?.map((image) => (
         <CarouselItem
           image={image}
-          key={image}
+          key={`${image}`}
           containerRef={containerRef}
         />
       ))}

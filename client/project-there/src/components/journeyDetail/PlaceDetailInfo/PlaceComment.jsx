@@ -1,10 +1,13 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
+import PlaceCommentReviseButton from './PlaceCommentReviseButton';
 
 const StyledComment = styled.li`
   display: flex;
-  width: 95%;
+  position:relative;
+  width: 92%;
   align-items: center;
+  justify-content: center;
   font-size: var(--font-micro) !important;
   margin: 6px 10px;
   img{
@@ -30,12 +33,19 @@ const StyledComment = styled.li`
   }
 `;
 
-export default function PlaceComment({ comment }) {
+export default function PlaceComment({ comment, controlDelete, controlFix }) {
+  const { memberProfileImageUrl, memberNickName, text } = comment;
+
   return (
     <StyledComment>
-      <img src={comment.thumbnail} alt="프로필이미지" />
-      <p className="nickName">{comment.memberId}</p>
-      <p className="comment">{comment.comment}</p>
+      <img src={memberProfileImageUrl} alt="p" />
+      <p className="nickName">{memberNickName}</p>
+      <p className="comment">{text}</p>
+      <PlaceCommentReviseButton
+        controlDelete={controlDelete}
+        controlFix={controlFix}
+        commentId={comment.commentId}
+      />
     </StyledComment>
   );
 }

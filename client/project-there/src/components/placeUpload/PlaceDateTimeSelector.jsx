@@ -75,6 +75,7 @@ export default function PlaceDateTimeSelector() {
   }, [imageTakenTime]);
 
   useEffect(() => {
+    console.log(placeInfo.placeTime);
     if (placeInfo.placeTime !== '') {
       setImageTakenTime(placeInfo.placeTime);
     }

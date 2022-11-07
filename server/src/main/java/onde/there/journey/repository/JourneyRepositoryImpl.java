@@ -2,6 +2,7 @@ package onde.there.journey.repository;
 
 import static onde.there.domain.QJourney.journey;
 import static onde.there.domain.QJourneyTheme.journeyTheme;
+import static onde.there.domain.QMember.*;
 import static onde.there.domain.type.JourneyThemeType.findByTheme;
 import static onde.there.domain.type.RegionType.findByRegion;
 
@@ -10,6 +11,7 @@ import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.util.List;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import onde.there.domain.Journey;
 import onde.there.dto.journy.JourneyDto;
@@ -35,6 +37,8 @@ public class JourneyRepositoryImpl implements JourneyRepositoryCustom {
 		List<Journey> content = jpaQueryFactory
 			.selectFrom(journey)
 			.innerJoin(journey.journeyThemes, journeyTheme)
+			.innerJoin(journey.member, member)
+			.fetchJoin()
 			.where(
 				journey.disclosure.eq("public"),
 				filteredRegion,
@@ -47,7 +51,7 @@ public class JourneyRepositoryImpl implements JourneyRepositoryCustom {
 			.fetch();
 
 		JPAQuery<Long> countQuery = jpaQueryFactory
-			.select(journey.count())
+			.select(journey.countDistinct())
 			.from(journey)
 			.innerJoin(journey.journeyThemes, journeyTheme)
 			.where(
@@ -66,6 +70,8 @@ public class JourneyRepositoryImpl implements JourneyRepositoryCustom {
 		List<Journey> content = jpaQueryFactory
 			.selectFrom(journey)
 			.innerJoin(journey.journeyThemes, journeyTheme)
+			.innerJoin(journey.member, member)
+			.fetchJoin()
 			.where(eqMemberId(memberId))
 			.groupBy(journey)
 			.offset(pageable.getOffset())
@@ -73,7 +79,7 @@ public class JourneyRepositoryImpl implements JourneyRepositoryCustom {
 			.fetch();
 
 		JPAQuery<Long> countQuery = jpaQueryFactory
-			.select(journey.count())
+			.select(journey.countDistinct())
 			.from(journey)
 			.innerJoin(journey.journeyThemes, journeyTheme)
 			.where(eqMemberId(memberId));
@@ -83,6 +89,10 @@ public class JourneyRepositoryImpl implements JourneyRepositoryCustom {
 	}
 
 	private BooleanExpression eqTitle(String title) {
+
+		if (Objects.equals(title, "")) {
+			return null;
+		}
 
 		return title == null ? null : journey.title.contains(title);
 	}

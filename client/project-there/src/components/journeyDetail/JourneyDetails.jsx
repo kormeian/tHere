@@ -16,7 +16,12 @@ const JourneyDetailsHolder = styled.div`
   margin-top: 120px;
 `;
 
-export default function JourneyDetails({ focusedPlace, hover, journeyId }) {
+export default function JourneyDetails({
+  focusedPlace,
+  hover,
+  journeyId,
+  controlNickName,
+}) {
   const holderRef = useRef();
 
   useEffect(() => {
@@ -38,7 +43,10 @@ export default function JourneyDetails({ focusedPlace, hover, journeyId }) {
     <JourneyDetailsHolder ref={holderRef}>
       <NewJourneyProvider>
         <JourneyDetailProvider>
-          <JourneyInfo journeyId={journeyId} />
+          <JourneyInfo
+            journeyId={journeyId}
+            controlNickName={controlNickName}
+          />
         </JourneyDetailProvider>
       </NewJourneyProvider>
       <PlacesDetails focusedPlace={focusedPlace} hover={hover} />

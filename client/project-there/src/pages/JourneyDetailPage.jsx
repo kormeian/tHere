@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
-import axios from 'axios';
 import { useParams, useNavigate } from 'react-router-dom';
 import JourneyDetails from '../components/journeyDetail/JourneyDetails';
 import JourneyMap from '../components/journeyDetail/JourneyMap';
 import { placeData } from '../datas/placeData';
 import Places from '../contexts/Places';
 import CategoryItemButton from '../components/journeyDetail/CategoryItemButton';
+import { baseAxios, authAxios } from '../lib/utills/customAxios';
+import { useAuthValue, useAuthActions } from '../contexts/auth';
+import { getAccessToken } from '../lib/utills/controlAccessToken';
 
 const JourneyHolder = styled.div`
   width: 100%;
@@ -26,7 +28,6 @@ const ButtonHolder = styled.button`
   color: white;
   height: 39px;
 `;
-
 const CategoryDisplay = styled.div`
   background-color: var(--color-green200);
   color: var(--color-gray100);
@@ -76,8 +77,11 @@ export default function JourneyDetailPage() {
   const [hoverPlace, setHoverPlace] = useState('');
   const [categoryOpen, setCategoryOpen] = useState(false);
   const [categorySelected, setCategorySelected] = useState([]);
+  const [nickName, setNickName] = useState('');
   const params = useParams();
   const navigate = useNavigate();
+  const userInfo = useAuthValue();
+  const { authenticateUser } = useAuthActions();
 
   const handleButtonClick = () => {
     navigate(`/placeupload/${params.journeyId}`);
@@ -87,23 +91,34 @@ export default function JourneyDetailPage() {
     setCategoryOpen((res) => !res);
   };
 
-  // // 서버로부터 데이터를 전송받음
-  // useEffect(() => {
-  //   const url = `http://ec2-18-183-58-95.ap-northeast-1.compute.amazonaws.com:8080/place/list?journeyId=${params.journeyId}`;
-  //   axios.get(url)
-  //     .then(({ data }) => {
-  //       console.log(data);
-  //       setTotalPlacesData(data);
-  //     })
-  //     .catch((err) => {
-  //       console.log(err);
-  //     });
-  // }, []);
-
-  // 자체 데이터로 테스트 할 때 사용함
   useEffect(() => {
-    setTotalPlacesData(placeData);
+    // access token을 가져와 userInfo를 갱신함
+    const accessToken = getAccessToken();
+    authenticateUser(accessToken);
+
+    // 서버로부터 데이터 전송 받음
+    const url = `place/list?journeyId=${params.journeyId}`;
+    authAxios.get(url)
+      .then(({ data }) => {
+        console.log(data);
+        setTotalPlacesData(data);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
   }, []);
+
+  useEffect(() => {
+    if (userInfo !== '' && nickName !== '') {
+      console.log(nickName);
+      console.log(userInfo);
+    }
+  }, [userInfo, nickName]);
+
+  // // 자체 데이터로 테스트 할 때 사용함
+  // useEffect(() => {
+  //   setTotalPlacesData(placeData);
+  // }, []);
 
   // 카테고리 변할 때 파악해줌
   useEffect(() => {
@@ -124,7 +139,7 @@ export default function JourneyDetailPage() {
 
   // 데이터가 들어왔을 때, 표시해줌
   useEffect(() => {
-    if (totalPlacesData.length !== 0) {
+    if (totalPlacesData?.length !== 0) {
       setTargetPlacesData(totalPlacesData);
     }
   }, [totalPlacesData]);
@@ -147,7 +162,6 @@ export default function JourneyDetailPage() {
               ))}
             </CategoryList>
           )}
-
         </CategoryDisplay>
         <JourneyMap
           setFocus={setFocusedPlace}
@@ -157,6 +171,7 @@ export default function JourneyDetailPage() {
           focusedPlace={focusedPlace}
           hover={[hoverPlace, setHoverPlace]}
           journeyId={params.journeyId}
+          controlNickName={[nickName, setNickName]}
         />
       </PlaceInfoProvider>
       <ButtonHolder type="button" onClick={handleButtonClick}>

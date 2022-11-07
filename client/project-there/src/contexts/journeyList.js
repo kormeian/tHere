@@ -6,7 +6,7 @@ import React, {
   useMemo,
   useState,
 } from 'react';
-import { SERVER_BASE_URL } from '../lib/constants/serverBaseUrl';
+import { authAxios, baseAxios } from '../lib/utills/customAxios';
 
 const JourneyListValueContext = createContext();
 const JourneyListActionsContext = createContext();
@@ -32,19 +32,34 @@ function JourneyListProvider({ children }) {
   );
 
   const actions = useMemo(() => ({
-
-    loadJourneyItems(params, page) {
-      const url = `${SERVER_BASE_URL}/journey/filtered-list?page=${page}&size=3`;
-
-      const options = { ...params };
-
-      Object.entries(options).forEach(([key, value]) => {
-        if (!value.length) options[key] = '';
-        else if (Array.isArray(value)) options[key] = options[key].join(',');
+    async loadJourneyItems(options, page = 0) {
+      const params = { ...options };
+      Object.entries(params).forEach(([key, value]) => {
+        if (!value.length) params[key] = '';
+        else if (Array.isArray(value)) params[key] = params[key].join(',');
       });
 
-      axios
-        .get(url, { params: options })
+      try {
+        const { data } = await baseAxios.get(
+          `/journey/filtered-list?page=${page}&size=6`,
+          { params },
+        );
+        console.log(data);
+
+        if (data) {
+          setJourneyList((prev) => [...prev, ...data.content]);
+        }
+
+        return data.content.length < page;
+      } catch (err) {
+        console.log(err);
+      }
+    },
+
+    // 페이징 기능 추가 필요
+    loadMyJourneyItems(memberId, page) {
+      authAxios
+        .get(`/journey/my-list?memberId=${memberId}&size=15&page=${page}`)
         .then(({ data }) => {
           if (!data?.content?.length) return false;
 
@@ -52,36 +67,22 @@ function JourneyListProvider({ children }) {
           return true;
         })
         .catch((err) => {
-          console.log(err);
+          const { errorCode, errorMessage } = err.response.data;
+          console.log(errorCode);
+          console.log(errorMessage);
         });
     },
 
     // 페이징 기능 추가 필요
-    loadMyJourneyItems(memberId, page) {
-      const url = `${SERVER_BASE_URL}/journey/my-list?memberId=${memberId}&size=3&page=${page}`;
-
-
-      axios
-        .get(url)
+    loadBookmarkedItems(memberId, page = 0) {
+      authAxios
+        .get(`/bookmark?memberId=${memberId}`)
         .then(({ data }) => {
-          if (!data?.content?.length) return false;
+          console.log(data);
 
-          setJourneyList((prev) => [...prev, ...data.content]);
-          return true;
-        })
-        .catch((err) => console.error(err));
-    },
+          if (!data) return false;
 
-    // 페이징 기능 추가 필요
-    loadBookmarkedItems(memberId, page) {
-      const url = `${SERVER_BASE_URL}/bookmark?memberId=${memberId}&size=3&page=${page}`;
-
-      axios
-        .get(url)
-        .then(({ data }) => {
-          if (!data?.content?.length) return false;
-
-          setJourneyList((prev) => [...prev, ...data.content]);
+          setJourneyList((prev) => [...prev, ...data]);
           return true;
         })
         .catch((err) => console.error(err));

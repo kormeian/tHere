@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { useJourneyListActions } from '../../contexts/journeyList';
 import JourneyList from '../main/JourneyList';
@@ -12,9 +12,10 @@ const Wrapper = styled.div`
 
 function MyJourney({ memberId }) {
   const { loadMyJourneyItems } = useJourneyListActions();
+  const [page, setPage] = useState(0);
 
   useEffect(() => {
-    loadMyJourneyItems(memberId);
+    loadMyJourneyItems(memberId, page);
   }, []);
 
   return (

@@ -232,8 +232,10 @@ public class JourneyServiceTest2 {
 			"TitleTest");
 		assertThat(result.getContent().get(1).getTitle()).isEqualTo(
 			"TitleTest2");
-		assertThat(result.getContent().get(0).getRegion()).isEqualTo(RegionType.SEOUL);
-		assertThat(result.getContent().get(1).getRegion()).isEqualTo(RegionType.GYEONGGI);
+		assertThat(result.getContent().get(0).getRegion()).isEqualTo(
+			RegionType.SEOUL);
+		assertThat(result.getContent().get(1).getRegion()).isEqualTo(
+			RegionType.GYEONGGI);
 
 
 	}

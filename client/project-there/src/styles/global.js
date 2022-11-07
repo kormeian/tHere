@@ -113,6 +113,10 @@ const GlobalStyle = createGlobalStyle`
 
   input {
     color: var(--color-green200);
+
+    &::placeholder {
+      color: var(--color-gray400);
+    }
   }
 `;
 

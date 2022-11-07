@@ -8,6 +8,7 @@ import onde.there.dto.member.MemberDto;
 import onde.there.member.exception.MemberException;
 import onde.there.member.exception.type.MemberErrorCode;
 import onde.there.member.security.jwt.TokenMemberId;
+import onde.there.member.service.AuthService;
 import onde.there.member.service.MemberService;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -47,7 +48,6 @@ public class MemberController {
         log.info("signup request => {}", signupRequest);
         Member member = memberService.sendSignupMail(signupRequest);
         MemberDto.SignupResponse response = new MemberDto.SignupResponse("인증 메일을 보냈습니다", member.getEmail());
-        System.out.println(response);
         return ResponseEntity.ok(response);
     }
 
@@ -57,29 +57,6 @@ public class MemberController {
         log.info("createConfirm key => {}", key);
         Member member = memberService.registerMember(key);
         return ResponseEntity.ok(member.getId() + "님의 회원가입이 완료 되었습니다! 로그인 후 서비스를 사용하실 수 있습니다.");
-    }
-
-    @Operation(summary = "로그인", description = "로그인")
-    @PostMapping("/signin")
-    public ResponseEntity<?> signin(@Validated @RequestBody MemberDto.SigninRequest signinRequest) {
-        log.info("signin request => {}", signinRequest.getId());
-        MemberDto.SigninResponse response = memberService.signin(signinRequest);
-        return ResponseEntity.ok(response);
-    }
-
-    @GetMapping("/auth")
-    public ResponseEntity<?> auth(@TokenMemberId String memberId) {
-        if (memberId == null) {
-            throw new MemberException(MemberErrorCode.AUTHORIZATION_HEADER_NOT_EMPTY);
-        }
-        log.info("auth request memberId => {}", memberId);
-        return ResponseEntity.ok(memberService.auth(memberId));
-    }
-
-    @PostMapping("/reissue")
-    public ResponseEntity<?> reissue(@Validated @RequestBody MemberDto.ReissueRequest request) {
-        log.info("reissue request => {}", request);
-        return ResponseEntity.ok(memberService.reissue(request));
     }
 
     @PatchMapping(consumes = {MediaType.MULTIPART_FORM_DATA_VALUE, MediaType.APPLICATION_JSON_VALUE})

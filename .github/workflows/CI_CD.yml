@@ -3,8 +3,6 @@ name: tHere_cicd_docker_image
 on:
   push:
     branches: [ main_server ]
-  pull_request:
-    branches: [ main_server ]
 
 #docker image build and push on dockerhub
 jobs:
@@ -39,7 +37,7 @@ jobs:
         run: |
           # create awsS3.yml
           cd ./server/src/main/resources
-
+          
           # awsS3.yml 파일 생성
           touch ./awsS3.yml
 
@@ -103,4 +101,5 @@ jobs:
           script: |
             sudo docker rm -f $(docker ps -qa)
             sudo docker pull ${{ secrets.IMAGE }}:latest
-            sudo docker run -d --name bepo-test -p 8080:8080 ${{ secrets.IMAGE }}:latest
+
+            sudo docker run -d --name there-server -p 8080:8080 ${{ secrets.IMAGE }}:latest

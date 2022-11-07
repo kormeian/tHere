@@ -12,6 +12,7 @@ public enum PlaceErrorCode {
 
 
 	MISMATCH_PLACE_CATEGORY_TYPE("일치하는 카테고리 타입이 없습니다."),
+	MISMATCH_MEMBER_ID("권한이 없는 아이디 입니다."),
 	BAD_REQUEST("입력 값을 확인해 주세요!"),
 	DUPLICATED_MEMBER_EMAIL("중복된 이메일 입니다!"),
 	DUPLICATED_MEMBER_ID("중복된 아이디 입니다!"),

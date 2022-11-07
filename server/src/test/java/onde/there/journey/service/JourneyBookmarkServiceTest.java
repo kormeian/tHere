@@ -1,6 +1,7 @@
 package onde.there.journey.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.List;
@@ -8,8 +9,7 @@ import onde.there.domain.Journey;
 import onde.there.domain.JourneyBookmark;
 import onde.there.domain.Member;
 import onde.there.domain.type.RegionType;
-import onde.there.dto.journy.JourneyBookmarkDto;
-import onde.there.dto.journy.JourneyBookmarkDto.JourneyBookmarkListResponse;
+import onde.there.dto.journy.JourneyBookmarkDto.JourneyBookmarkPageResponse;
 import onde.there.journey.exception.JourneyErrorCode;
 import onde.there.journey.exception.JourneyException;
 import onde.there.journey.repository.JourneyBookmarkRepository;
@@ -18,6 +18,9 @@ import onde.there.member.repository.MemberRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest
@@ -39,10 +42,7 @@ class JourneyBookmarkServiceTest {
 		Member member = memberRepository.save(new Member("1", "", "", ""));
 		Journey journey = journeyRepository.save(new Journey());
 		//when
-		Long id = journeyBookmarkService.createBookmark(JourneyBookmarkDto.CreateRequest.builder()
-			.journeyId(journey.getId())
-			.memberId(member.getId())
-			.build());
+		Long id = journeyBookmarkService.createBookmark(journey.getId(), member.getId());
 		//then
 		JourneyBookmark journeyBookmark = journeyBookmarkRepository.findById(id).orElseThrow();
 		assertEquals(member.getId(), journeyBookmark.getMember().getId());
@@ -57,10 +57,7 @@ class JourneyBookmarkServiceTest {
 		Journey journey = journeyRepository.save(new Journey());
 		//when
 		JourneyException journeyException = assertThrows(JourneyException.class,
-			() -> journeyBookmarkService.createBookmark(JourneyBookmarkDto.CreateRequest.builder()
-				.memberId("2")
-				.journeyId(journey.getId())
-				.build()));
+			() -> journeyBookmarkService.createBookmark(journey.getId(), "any member Id"));
 		//then
 		assertEquals(JourneyErrorCode.NOT_FOUND_MEMBER, journeyException.getErrorCode());
 	}
@@ -72,10 +69,7 @@ class JourneyBookmarkServiceTest {
 		Journey journey = journeyRepository.save(new Journey());
 		//when
 		JourneyException journeyException = assertThrows(JourneyException.class,
-			() -> journeyBookmarkService.createBookmark(JourneyBookmarkDto.CreateRequest.builder()
-				.memberId(member.getId())
-				.journeyId(123L)
-				.build()));
+			() -> journeyBookmarkService.createBookmark(123L, member.getId()));
 		//then
 		assertEquals(JourneyErrorCode.NOT_FOUND_JOURNEY, journeyException.getErrorCode());
 	}
@@ -90,9 +84,9 @@ class JourneyBookmarkServiceTest {
 			.journey(journey)
 			.build());
 		//when
-		journeyBookmarkService.deleteBookmark(journeyBookmark.getId());
+		journeyBookmarkService.deleteBookmark(journey.getId(), member.getId());
 		//then
-		assertEquals(0, journeyBookmarkRepository.count());
+		assertFalse(journeyBookmarkRepository.existsById(journeyBookmark.getId()));
 	}
 
 	@Test
@@ -106,7 +100,7 @@ class JourneyBookmarkServiceTest {
 			.build());
 		//when
 		System.out.println(journeyBookmarkRepository.count());
-		JourneyException journeyException = assertThrows(JourneyException.class , () ->journeyBookmarkService.deleteBookmark(123L));
+		JourneyException journeyException = assertThrows(JourneyException.class , () ->journeyBookmarkService.deleteBookmark(123L, member.getId()));
 		//then
 		assertEquals(JourneyErrorCode.NOT_FOUND_BOOKMARK, journeyException.getErrorCode());
 	}
@@ -120,38 +114,34 @@ class JourneyBookmarkServiceTest {
 				.title("TitleTest")
 				.region(RegionType.BUSAN)
 			.build());
-		journeyBookmarkService.createBookmark(JourneyBookmarkDto.CreateRequest.builder()
-			.journeyId(journey.getId())
-			.memberId(member.getId())
-			.build());
+		journeyBookmarkService.createBookmark(journey.getId(), member.getId());
 		Journey journey2 = journeyRepository.save(Journey.builder()
 			.member(member)
 			.title("TitleTest2")
 			.region(RegionType.CHUNGBUK)
 			.build());
-		journeyBookmarkService.createBookmark(JourneyBookmarkDto.CreateRequest.builder()
-			.journeyId(journey2.getId())
-			.memberId(member.getId())
-			.build());
+		journeyBookmarkService.createBookmark(journey2.getId(), member.getId());
+		Pageable pageable = PageRequest.of(0, 3);
 		//when
-		List<JourneyBookmarkDto.JourneyBookmarkListResponse> responses =
-			journeyBookmarkService.getBookmarkList(member.getId());
+		Page<JourneyBookmarkPageResponse> responses =
+			journeyBookmarkService.getBookmarkList(member.getId(), pageable);
 		//then
-		for (JourneyBookmarkListResponse response : responses) {
+		for (JourneyBookmarkPageResponse response : responses) {
 			assertEquals(member.getId(), response.getMemberId());
 		}
-		assertEquals(2, responses.size());
+		assertEquals(2, responses.getTotalElements());
 	}
 
 	@Test
 	void 북마크_조회_찜안했을경우() {
 		//given
 		Member member = memberRepository.save(new Member("1", "", "", ""));
+		Pageable pageable = PageRequest.of(0, 3);
 		//when
-		List<JourneyBookmarkDto.JourneyBookmarkListResponse> responses =
-			journeyBookmarkService.getBookmarkList(member.getId());
+		Page<JourneyBookmarkPageResponse> responses =
+			journeyBookmarkService.getBookmarkList(member.getId(), pageable);
 		//then
-		assertEquals(0, responses.size());
+		assertEquals(0, responses.getTotalElements());
 	}
 
 	@Test
@@ -163,21 +153,16 @@ class JourneyBookmarkServiceTest {
 			.title("TitleTest")
 			.region(RegionType.BUSAN)
 			.build());
-		journeyBookmarkService.createBookmark(JourneyBookmarkDto.CreateRequest.builder()
-			.journeyId(journey.getId())
-			.memberId(member.getId())
-			.build());
+		journeyBookmarkService.createBookmark(journey.getId(), member.getId());
 		Journey journey2 = journeyRepository.save(Journey.builder()
 			.member(member)
 			.title("TitleTest2")
 			.region(RegionType.CHUNGBUK)
 			.build());
-		journeyBookmarkService.createBookmark(JourneyBookmarkDto.CreateRequest.builder()
-			.journeyId(journey2.getId())
-			.memberId(member.getId())
-			.build());
+		journeyBookmarkService.createBookmark(journey2.getId(), member.getId());
+		Pageable pageable = PageRequest.of(0, 3);
 		//when
-		JourneyException journeyException = assertThrows(JourneyException.class, () -> journeyBookmarkService.getBookmarkList("123"));
+		JourneyException journeyException = assertThrows(JourneyException.class, () -> journeyBookmarkService.getBookmarkList("any member Id", pageable));
 	    //then
 		assertEquals(JourneyErrorCode.NOT_FOUND_MEMBER, journeyException.getErrorCode());
 	}

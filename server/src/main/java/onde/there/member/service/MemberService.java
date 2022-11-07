@@ -162,8 +162,22 @@ public class MemberService {
                     return memberException;
                 });
 
-        String profileUrl = awsS3Service.uploadFiles(List.of(multipartFile)).get(0);
-        String encodedPassword = passwordEncoder.encode(updateRequest.getPassword());
+
+        String profileUrl = null;
+        if (multipartFile.isEmpty()) {
+            profileUrl = member.getProfileImageUrl();
+        } else {
+            profileUrl = awsS3Service.uploadFiles(List.of(multipartFile)).get(0);
+        }
+
+        String encodedPassword = null;
+
+        if (updateRequest.getPassword().equals("")) {
+            encodedPassword = member.getPassword();
+        } else {
+            encodedPassword= passwordEncoder.encode(updateRequest.getPassword());
+        }
+
         member.update(updateRequest, encodedPassword, profileUrl);
         return member;
     }

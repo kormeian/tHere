@@ -63,6 +63,16 @@ public class MemberDto {
     @Getter
     @NoArgsConstructor
     @AllArgsConstructor
+    public static class CheckNickNameResponse {
+        @Schema(description = "중복 확인 결과")
+        boolean result;
+    }
+
+    @ToString
+    @Builder
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
     @Schema(name = "SignupRequest", description = "회원 가입 요청 요청")
     public static class SignupRequest {
         @Pattern(regexp = "^(?=.*[a-zA-Z])[0-9a-zA-Z]{4,60}$", message = "아이디: 알파벳, 숫자를 조합한 4자리~60자리 문자열을 입력 해 주세요!")

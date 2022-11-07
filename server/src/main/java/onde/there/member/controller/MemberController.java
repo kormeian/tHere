@@ -41,6 +41,14 @@ public class MemberController {
         return ResponseEntity.ok(response);
     }
 
+    @Operation
+    @GetMapping("/check/{nickName}")
+    public ResponseEntity<?> checkNickName(@Validated @PathVariable String nickName) {
+        return ResponseEntity.ok(MemberDto.CheckNickNameResponse.builder()
+                                                                .result(memberService.checkNickName(nickName))
+                                                                .build());
+    }
+
     @Operation(summary = "회원 가입 신청", description = "회원 가입 정보를 받아서 인증 메일을 보내줍니다.")
     @PostMapping("/signup")
     public ResponseEntity<?> signup(@Validated @RequestBody MemberDto.SignupRequest signupRequest) {

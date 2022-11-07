@@ -42,6 +42,10 @@ public class MemberService {
         return !memberRepository.existsByEmail(checkEmailRequest.getEmail());
     }
 
+    public boolean checkNickName(String nickName) {
+        return !memberRepository.existsByNickName(nickName);
+    }
+
     public Member sendSignupMail(MemberDto.SignupRequest signupRequest) {
         if (memberRepository.existsByEmail(signupRequest.getEmail())) {
             MemberException memberException = new MemberException(MemberErrorCode.DUPLICATED_MEMBER_EMAIL);
@@ -125,4 +129,6 @@ public class MemberService {
         }
         return profileUrl;
     }
+
+
 }

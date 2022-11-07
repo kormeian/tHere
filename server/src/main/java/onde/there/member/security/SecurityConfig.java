@@ -6,6 +6,7 @@ import onde.there.member.security.jwt.JwtExceptionFilter;
 import onde.there.member.security.jwt.JwtService;
 import onde.there.member.security.oauth2.OAuth2AuthenticationSuccessHandler;
 import onde.there.member.security.oauth2.Oauth2MemberService;
+import onde.there.member.utils.RedisService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -42,6 +43,7 @@ public class SecurityConfig {
     private final Oauth2MemberService oAuth2UserService;
     private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
     private final JwtService jwtService;
+    private final RedisService<String> redisService;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -75,7 +77,7 @@ public class SecurityConfig {
                 .and()
                 .successHandler(oAuth2AuthenticationSuccessHandler)
                 .and()
-                .addFilterBefore(new JwtAuthenticationFilter(jwtService), UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(new JwtAuthenticationFilter(jwtService, redisService), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(new JwtExceptionFilter(), JwtAuthenticationFilter.class);
 
         return http.build();

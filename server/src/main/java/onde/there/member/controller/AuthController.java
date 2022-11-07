@@ -31,7 +31,7 @@ public class AuthController {
     @GetMapping("/auth")
     public ResponseEntity<?> auth(@TokenMemberId String memberId) {
         if (memberId == null) {
-            throw new MemberException(MemberErrorCode.AUTHORIZATION_HEADER_NOT_EMPTY);
+            throw new MemberException(MemberErrorCode.LOGIN_REQUIRED);
         }
         log.info("auth request memberId => {}", memberId);
         return ResponseEntity.ok(authService.auth(memberId));
@@ -41,5 +41,13 @@ public class AuthController {
     public ResponseEntity<?> reissue(@Validated @RequestBody MemberDto.ReissueRequest request) {
         log.info("reissue request => {}", request);
         return ResponseEntity.ok(authService.reissue(request));
+    }
+
+    @Operation(summary = "로그아웃", description = "로그아웃")
+    @PostMapping("/signout")
+    public ResponseEntity<?> signout(@Validated @RequestBody MemberDto.SignoutRequest signoutRequest) {
+        log.info("signout request => {}", signoutRequest);
+        authService.signout(signoutRequest);
+        return ResponseEntity.ok().build();
     }
 }

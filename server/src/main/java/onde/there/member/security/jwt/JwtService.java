@@ -127,4 +127,12 @@ public class JwtService {
         log.error("TOKEN Type => {}", tokenType.name());
         log.error("token => {}", token);
     }
+
+    public Long getExpiration(String accessToken) {
+        // accessToken 남은 유효시간
+        Date expiration = Jwts.parser().setSigningKey(secretKey).parseClaimsJws(accessToken).getBody().getExpiration();
+        // 현재 시간
+        Long now = new Date().getTime();
+        return (expiration.getTime() - now);
+    }
 }

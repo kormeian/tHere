@@ -8,7 +8,6 @@ import onde.there.dto.member.MemberDto;
 import onde.there.member.exception.MemberException;
 import onde.there.member.exception.type.MemberErrorCode;
 import onde.there.member.security.jwt.TokenMemberId;
-import onde.there.member.service.AuthService;
 import onde.there.member.service.MemberService;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -64,7 +63,7 @@ public class MemberController {
                                     @Validated @RequestPart MemberDto.UpdateRequest updateRequest,
                                     @TokenMemberId String memberId) {
         if (memberId == null) {
-            throw new MemberException(MemberErrorCode.AUTHORIZATION_HEADER_NOT_EMPTY);
+            throw new MemberException(MemberErrorCode.LOGIN_REQUIRED);
         }
 
         log.info("member update request => {}", updateRequest);

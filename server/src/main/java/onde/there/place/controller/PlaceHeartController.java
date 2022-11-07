@@ -3,6 +3,7 @@ package onde.there.place.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import lombok.RequiredArgsConstructor;
+import onde.there.member.security.jwt.TokenMemberId;
 import onde.there.place.service.PlaceHeartService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,8 +24,7 @@ public class PlaceHeartController {
 	public ResponseEntity<?> heart(
 		@Parameter(description = "장소 아이디", required = true)
 		@RequestParam Long placeId,
-		@Parameter(description = "맴버 아이디)", required = true)
-		@RequestParam String memberId) {
+		@Parameter(hidden = true) @TokenMemberId String memberId) {
 		return ResponseEntity.status(HttpStatus.CREATED)
 			.body(placeHeartService.heart(placeId, memberId));
 	}
@@ -34,8 +34,8 @@ public class PlaceHeartController {
 	public ResponseEntity<?> unHeart(
 		@Parameter(description = "장소 아이디", required = true)
 		@RequestParam Long placeId,
-		@Parameter(description = "맴버 아이디", required = true)
-		@RequestParam String memberId) {
+		@Parameter(hidden = true)
+		@TokenMemberId String memberId) {
 		return ResponseEntity.status(HttpStatus.OK)
 			.body(placeHeartService.unHeart(placeId, memberId));
 	}

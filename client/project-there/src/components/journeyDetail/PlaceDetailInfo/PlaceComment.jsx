@@ -5,7 +5,7 @@ import PlaceCommentReviseButton from './PlaceCommentReviseButton';
 const StyledComment = styled.li`
   display: flex;
   position:relative;
-  width: 92%;
+  width: 90%;
   align-items: center;
   justify-content: center;
   font-size: var(--font-micro) !important;
@@ -33,7 +33,7 @@ const StyledComment = styled.li`
   }
 `;
 
-export default function PlaceComment({ comment, controlDelete, controlFix }) {
+export default function PlaceComment({ comment, controlDelete, controlFix, edit }) {
   const { memberProfileImageUrl, memberNickName, text } = comment;
 
   return (
@@ -41,11 +41,12 @@ export default function PlaceComment({ comment, controlDelete, controlFix }) {
       <img src={memberProfileImageUrl} alt="p" />
       <p className="nickName">{memberNickName}</p>
       <p className="comment">{text}</p>
-      <PlaceCommentReviseButton
-        controlDelete={controlDelete}
-        controlFix={controlFix}
-        commentId={comment.commentId}
-      />
+      {edit && (
+        <PlaceCommentReviseButton
+          controlDelete={controlDelete}
+          controlFix={controlFix}
+          commentId={comment.commentId}
+        />)}
     </StyledComment>
   );
 }

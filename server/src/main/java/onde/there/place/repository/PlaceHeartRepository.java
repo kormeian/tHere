@@ -1,5 +1,6 @@
 package onde.there.place.repository;
 
+import java.util.List;
 import java.util.Optional;
 import onde.there.domain.Member;
 import onde.there.domain.Place;
@@ -13,6 +14,8 @@ import org.springframework.stereotype.Repository;
 public interface PlaceHeartRepository extends JpaRepository<PlaceHeart, Long> {
 
 	boolean existsByPlaceIdAndMemberId(Long placeId, String memberId);
+
+	List<PlaceHeart> findAllByPlaceId(Long placeId);
 
 	@Query(name = "SELECT p FROM place_heart p WHERE p.place_id = : find_id ")
 	Long countByPlaceId(@Param(value = "find_id") Long placeId);

@@ -90,7 +90,7 @@ const StyledCommentInputHolder = styled.div`
   }
 `;
 
-export default function PlaceCommentList({ isOverflowed, placeId }) {
+export default function PlaceCommentList({ isOverflowed, placeId, edit }) {
   const [isCommentOverflowed, setIsCommentOverflowed] = useState(false);
   const [displayCommentOverflowed, setDisplayCommentOverflowed] = useState(false);
   const [comments, setComments] = useState([]);
@@ -207,23 +207,19 @@ export default function PlaceCommentList({ isOverflowed, placeId }) {
 
     // 추가 대상이 있을 경우 추가해줌
     if (addList?.length !== 0) {
-      Promise.all(addList?.forEach((request) => {
-        console.log(request);
-        addPlaceComment(request);
-      })).catch((err) => console.log(err));
+      Promise.all(addList?.map((request) => addPlaceComment(request)))
+        .catch((err) => console.log(err));
     }
     // 삭제 대상이 있을 경우 삭제해줌
     if (deleteList?.length !== 0) {
-      Promise.all(deleteList?.forEach((element) => {
-        deletePlaceComment(element.commentId);
-      })).catch((err) => console.log(err));
+      Promise.all(deleteList?.map((element) => deletePlaceComment(element.commentId)))
+        .catch((err) => console.log(err));
     }
 
     // 수정 대상이 있을 경우 수정해줌
     if (fixList?.length !== 0) {
-      Promise.all(fixList?.forEach((element) => {
-        updatePlaceComment(element);
-      })).catch((err) => console.log(err));
+      Promise.all(fixList?.map((element) => updatePlaceComment(element)))
+        .catch((err) => console.log(err));
     }
   };
 
@@ -258,18 +254,23 @@ export default function PlaceCommentList({ isOverflowed, placeId }) {
 
   const handleCommentInput = (e) => {
     e.preventDefault();
-    const { value } = e.target.querySelector('input');
-    if (value !== '') {
-      const newComment = {
-        memberNickName: userInfo?.nickName,
-        text: value,
-        memberProfileImageUrl: userInfo?.profileImageUrl,
-        commentId: tmpCommentId,
-        placeId,
-      };
-      setTmpCommentId((pre) => pre - 1);
-      setComments((prev) => [...prev, newComment]);
-      e.target.querySelector('input').value = '';
+
+    if (userInfo?.nickName === '') {
+      window.alert('로그인이 필요한 서비스입니다.');
+    } else {
+      const { value } = e.target.querySelector('input');
+      if (value !== '') {
+        const newComment = {
+          memberNickName: userInfo?.nickName,
+          text: value,
+          memberProfileImageUrl: userInfo?.profileImageUrl,
+          commentId: tmpCommentId,
+          placeId,
+        };
+        setTmpCommentId((pre) => pre - 1);
+        setComments((prev) => [...prev, newComment]);
+        e.target.querySelector('input').value = '';
+      }
     }
   };
 
@@ -320,6 +321,7 @@ export default function PlaceCommentList({ isOverflowed, placeId }) {
               comment={comment}
               controlDelete={setdeleteTarget}
               controlFix={setFixTarget}
+              edit={edit}
             />))}
         {fixTarget !== 0 && (
           <section>

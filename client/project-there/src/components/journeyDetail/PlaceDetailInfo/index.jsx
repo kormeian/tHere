@@ -74,7 +74,7 @@ const StyledLikeIconHolder = styled.div`
   }
 `;
 
-export default function PlaceDetailInfo({ target }) {
+export default function PlaceDetailInfo({ target, edit }) {
   const [isOverflowed, setIsOverFlowed] = useState(false);
   const [displayOverflowed, setDisplayOverFlowed] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
@@ -128,12 +128,16 @@ export default function PlaceDetailInfo({ target }) {
     setDisplayOverFlowed((pre) => !pre);
   };
   const handleLikeButtonClick = () => {
-    setIsLiked((pre) => !pre);
-    if (typeof (likeCount) === 'number') {
-      if (isLiked) {
-        setLikeCount((pre) => pre - 1);
-      } else {
-        setLikeCount((pre) => pre + 1);
+    if (memberInfo?.nickName === '') {
+      window.alert('로그인이 필요한 서비스입니다.');
+    } else {
+      setIsLiked((pre) => !pre);
+      if (typeof (likeCount) === 'number') {
+        if (isLiked) {
+          setLikeCount((pre) => pre - 1);
+        } else {
+          setLikeCount((pre) => pre + 1);
+        }
       }
     }
   };
@@ -168,6 +172,7 @@ export default function PlaceDetailInfo({ target }) {
       <PlaceCommentList
         isOverflowed={isOverflowed}
         placeId={target?.placeId}
+        edit={edit}
       />
     </StyledInfoHolder>
   );

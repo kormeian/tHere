@@ -3,7 +3,7 @@ import styled from 'styled-components';
 
 const ButtonHolder = styled.div`
   position: absolute;
-  right: -5%;
+  right: -8%;
   top:0;
   z-index: 12;
   cursor: pointer;
@@ -58,7 +58,6 @@ export default function PlaceCommentReviseButton({ controlDelete, controlFix,
 
   const handleFix = (e) => {
     e.stopPropagation();
-    console.log('fix click');
     controlFix(commentId);
     setIsOpen(false);
   };

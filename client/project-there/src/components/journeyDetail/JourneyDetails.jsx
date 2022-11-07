@@ -21,6 +21,7 @@ export default function JourneyDetails({
   hover,
   journeyId,
   controlNickName,
+  edit,
 }) {
   const holderRef = useRef();
 
@@ -46,10 +47,15 @@ export default function JourneyDetails({
           <JourneyInfo
             journeyId={journeyId}
             controlNickName={controlNickName}
+            edit={edit}
           />
         </JourneyDetailProvider>
       </NewJourneyProvider>
-      <PlacesDetails focusedPlace={focusedPlace} hover={hover} />
+      <PlacesDetails
+        focusedPlace={focusedPlace}
+        hover={hover}
+        edit={edit}
+      />
     </JourneyDetailsHolder>
   );
 }

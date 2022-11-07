@@ -1,20 +1,19 @@
 package onde.there.journey.service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import onde.there.domain.Journey;
 import onde.there.domain.JourneyBookmark;
 import onde.there.domain.Member;
-import onde.there.dto.journy.JourneyBookmarkDto;
+import onde.there.dto.journy.JourneyBookmarkDto.JourneyBookmarkPageResponse;
 import onde.there.journey.exception.JourneyErrorCode;
 import onde.there.journey.exception.JourneyException;
 import onde.there.journey.repository.JourneyBookmarkRepository;
+import onde.there.journey.repository.JourneyBookmarkRepositoryImpl;
 import onde.there.journey.repository.JourneyRepository;
-import onde.there.journey.repository.JourneyThemeRepository;
 import onde.there.member.repository.MemberRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,15 +25,18 @@ public class JourneyBookmarkService {
 	private final JourneyBookmarkRepository journeyBookmarkRepository;
 	private final MemberRepository memberRepository;
 	private final JourneyRepository journeyRepository;
-	private final JourneyThemeRepository journeyThemeRepository;
+	private final JourneyBookmarkRepositoryImpl journeyBookmarkRepositoryImpl;
 
 	@Transactional
-	public Long createBookmark(JourneyBookmarkDto.CreateRequest request) {
-		Member member = memberRepository.findById(request.getMemberId())
+	public Long createBookmark(Long journeyId, String memberId) {
+		Member member = memberRepository.findById(memberId)
 			.orElseThrow(() -> new JourneyException(
 				JourneyErrorCode.NOT_FOUND_MEMBER));
-		Journey journey = journeyRepository.findById(request.getJourneyId())
+		Journey journey = journeyRepository.findById(journeyId)
 			.orElseThrow(() -> new JourneyException(JourneyErrorCode.NOT_FOUND_JOURNEY));
+		if (journeyBookmarkRepository.existsByMemberIdAndJourneyId(memberId, journeyId)) {
+			throw new JourneyException(JourneyErrorCode.ALREADY_ADDED_BOOKMARK);
+		}
 		JourneyBookmark journeyBookmark = journeyBookmarkRepository.save(JourneyBookmark.builder()
 			.member(member)
 			.journey(journey)
@@ -44,40 +46,22 @@ public class JourneyBookmarkService {
 	}
 
 	@Transactional
-	public void deleteBookmark(Long id) {
-		if (!journeyBookmarkRepository.existsById(id)) {
-			throw new JourneyException(JourneyErrorCode.NOT_FOUND_BOOKMARK);
-		}
-		journeyBookmarkRepository.deleteById(id);
-		log.info("북마크 아이디 : " + id + "가 삭제 되었습니다.");
+	public void deleteBookmark(Long journeyId, String memberId) {
+		JourneyBookmark journeyBookmark = journeyBookmarkRepository.findByMemberIdAndJourneyId(
+			memberId, journeyId).orElseThrow(
+			() -> new JourneyException(JourneyErrorCode.NOT_FOUND_BOOKMARK));
+		journeyBookmarkRepository.delete(journeyBookmark);
+		log.info("북마크 아이디 : " + journeyBookmark.getId() + "가 삭제 되었습니다.");
 	}
 
 	@Transactional(readOnly = true)
-	public List<JourneyBookmarkDto.JourneyBookmarkListResponse> getBookmarkList(String id) {
-		List<JourneyBookmarkDto.JourneyBookmarkListResponse> responses = new ArrayList<>();
-		if (!memberRepository.existsById(id)) {
+	public Page<JourneyBookmarkPageResponse> getBookmarkList(String memberId, Pageable pageable) {
+		log.info("멤버 아이디 : " + memberId + " 북마크 조회 시작");
+		if (!memberRepository.existsById(memberId)) {
 			throw new JourneyException(JourneyErrorCode.NOT_FOUND_MEMBER);
 		}
-		List<JourneyBookmark> bookmarks = journeyBookmarkRepository.findAllByMemberId(id);
-		if (bookmarks.isEmpty()) {
-			log.info("찜한 여정이 없습니다.");
-			return responses;
-		}
-		for (JourneyBookmark bookmark : bookmarks) {
-			Journey journey = bookmark.getJourney();
-			if(!journeyRepository.existsById(journey.getId())){
-				throw new JourneyException(JourneyErrorCode.NOT_FOUND_JOURNEY);
-			}
-			List<String> themes = journeyThemeRepository.findAllByJourneyId(journey.getId())
-				.stream().map(journeyTheme -> journeyTheme.getJourneyThemeName().getThemeName())
-				.collect(Collectors.toList());
-			responses.add(
-				JourneyBookmarkDto.JourneyBookmarkListResponse.fromEntity(journey, themes,
-					bookmark.getId()));
-			log.info("여정 아이디 " + journey.getId() + "조회 성공");
-		}
-		log.info("멤버 아이디 " + id + "의 북마크 갯수 : " + responses.size() + " 조회 성공");
 
-		return responses;
+		return journeyBookmarkRepositoryImpl.getBookmarkPage(memberId, pageable)
+			.map(JourneyBookmarkPageResponse::fromEntity);
 	}
 }

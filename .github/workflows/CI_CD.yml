@@ -3,8 +3,6 @@ name: tHere_cicd_docker_image
 on:
   push:
     branches: [ main_server ]
-  pull_request:
-    branches: [ main_server ]
 
 #docker image build and push on dockerhub
 jobs:
@@ -39,7 +37,7 @@ jobs:
         run: |
           # create awsS3.yml
           cd ./server/src/main/resources
-
+          
           # awsS3.yml 파일 생성
           touch ./awsS3.yml
 
@@ -54,10 +52,10 @@ jobs:
           cd ./server/src/main/resources
 
           # mail.yml 파일 생성
-          touch ./main.yml
+          touch ./mail.yml
 
-          # GitHub-Actions 에서 설정한 값을 main.yml 파일에 쓰기
-          echo "${{ secrets.MAIL_YML }}" >> ./main.yml
+          # GitHub-Actions 에서 설정한 값을 mail.yml 파일에 쓰기
+          echo "${{ secrets.MAIL_YML }}" >> ./mail.yml
         shell: bash
 
       ## create oauth2.yml
@@ -84,6 +82,7 @@ jobs:
       - name: docker build and push
         run: |
           docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+          cd ./server
           docker build -t ${{ secrets.IMAGE }} .
           docker push ${{ secrets.IMAGE }}
 
@@ -97,9 +96,10 @@ jobs:
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.HOST }}
-          username: ubuntu
+          username: ec2-user
           key: ${{ secrets.KEY }}
           script: |
-            sudo docker rm -f $(docker ps -qa)
+            sudo docker rm -f $(docker ps -aq)
+            sudo docker container rm there-server
             sudo docker pull ${{ secrets.IMAGE }}:latest
-            sudo docker run -d --name bepo-test -p 8080:8080 ${{ secrets.IMAGE }}:latest
+            sudo docker run -d --name there-server -p 8080:8080 ${{ secrets.IMAGE }}:latest

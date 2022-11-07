@@ -9,7 +9,7 @@ public enum PlaceErrorCode {
 	NOT_FOUND_JOURNEY("존재하지 않는 여정입니다."),
 	NOT_FOUND_PLACE("존재하지 않는 장소입니다."),
 	NOT_FOUND_MEMBER("존재하지 않는 유저입니다."),
-
+	MAX_PLACE_NUM("여정 하나에 장소는 10개를 초과할 수 없습니다."),
 
 	MISMATCH_PLACE_CATEGORY_TYPE("일치하는 카테고리 타입이 없습니다."),
 	MISMATCH_MEMBER_ID("권한이 없는 아이디 입니다."),

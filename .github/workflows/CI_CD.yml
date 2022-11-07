@@ -99,7 +99,7 @@ jobs:
           username: ec2-user
           key: ${{ secrets.KEY }}
           script: |
-            sudo docker contaner rm -f there-server
+            sudo docker container rm -f there-server
             sudo docker rmi $(docker images -q)
             sudo docker pull ${{ secrets.IMAGE }}:latest
             sudo docker run -d --name there-server -p 8080:8080 ${{ secrets.IMAGE }}:latest

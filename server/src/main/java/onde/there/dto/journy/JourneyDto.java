@@ -29,10 +29,6 @@ public class JourneyDto {
 	@Schema(name = "여정 생성 요청 parameter")
 	public static class CreateRequest {
 
-		@NotBlank(message = "이메일을 입력해주세요.")
-		@Schema(description = "유저 아이디")
-		private String memberId;
-
 		@NotBlank(message = "제목을 입력해주세요.")
 		@Schema(description = "여정 제목")
 		private String title;
@@ -156,10 +152,6 @@ public class JourneyDto {
 		@NotNull
 		@Schema(description = "여정 아이디")
 		private Long journeyId;
-
-		@NotBlank(message = "이메일을 입력해주세요.")
-		@Schema(description = "유저 아이디")
-		private String memberId;
 
 		@NotBlank(message = "제목을 입력해주세요.")
 		@Schema(description = "여정 제목")

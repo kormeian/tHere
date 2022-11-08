@@ -22,14 +22,14 @@ public class AuthController {
 
     @Operation(summary = "로그인", description = "로그인")
     @PostMapping("/signin")
-    public ResponseEntity<?> signin(@Validated @RequestBody MemberDto.SigninRequest signinRequest) {
+    public ResponseEntity<MemberDto.SigninResponse> signin(@Validated @RequestBody MemberDto.SigninRequest signinRequest) {
         log.info("signin request => {}", signinRequest.getId());
         MemberDto.SigninResponse response = authService.signin(signinRequest);
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/auth")
-    public ResponseEntity<?> auth(@TokenMemberId String memberId) {
+    public ResponseEntity<MemberDto.AuthResponse> auth(@TokenMemberId String memberId) {
         if (memberId == null) {
             throw new MemberException(MemberErrorCode.LOGIN_REQUIRED);
         }
@@ -38,14 +38,14 @@ public class AuthController {
     }
 
     @PostMapping("/reissue")
-    public ResponseEntity<?> reissue(@Validated @RequestBody MemberDto.ReissueRequest request) {
+    public ResponseEntity<MemberDto.SigninResponse> reissue(@Validated @RequestBody MemberDto.ReissueRequest request) {
         log.info("reissue request => {}", request);
         return ResponseEntity.ok(authService.reissue(request));
     }
 
     @Operation(summary = "로그아웃", description = "로그아웃")
     @PostMapping("/signout")
-    public ResponseEntity<?> signout(@Validated @RequestBody MemberDto.SignoutRequest signoutRequest) {
+    public ResponseEntity<Void> signout(@Validated @RequestBody MemberDto.SignoutRequest signoutRequest) {
         log.info("signout request => {}", signoutRequest);
         authService.signout(signoutRequest);
         return ResponseEntity.ok().build();

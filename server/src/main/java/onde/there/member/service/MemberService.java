@@ -122,7 +122,7 @@ public class MemberService {
 
     private String parseUpdateProfileUrl(MultipartFile multipartFile, Member member) {
         String profileUrl = null;
-        if (multipartFile.isEmpty()) {
+        if (multipartFile == null || multipartFile.isEmpty()) {
             profileUrl = member.getProfileImageUrl();
         } else {
             profileUrl = awsS3Service.uploadFiles(List.of(multipartFile)).get(0);

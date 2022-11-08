@@ -44,7 +44,7 @@ public class JwtAuthenticationFilter extends GenericFilterBean {
     private void validateToken(String token) {
         jwtService.validateToken(token, TokenType.ACCESS);
         String logout = checkLogoutToken(token);
-        if(logout != null) {
+        if(logout == null) {
             Authentication authentication = jwtService.getAuthentication(token);
             SecurityContextHolder.getContext().setAuthentication(authentication);
         }

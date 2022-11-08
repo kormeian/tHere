@@ -15,4 +15,5 @@ public interface PlaceRepository extends JpaRepository<Place, Long> {
 	Integer deleteAllByJourneyId(Long journeyId);
 
 	Long countAllByJourneyId(Long journeyId);
+	List<Place> findAllByJourney(Journey journey);
 }

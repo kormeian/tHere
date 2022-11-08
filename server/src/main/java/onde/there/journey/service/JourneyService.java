@@ -211,11 +211,7 @@ public class JourneyService {
 		List<JourneyTheme> journeyThemeTypeList = journeyThemeRepository
 			.findAllByJourneyId(journey.getId());
 
-		List<Place> list = placeRepository.findAllByJourneyIdOrderByPlaceTimeAsc(journeyId);
-
-		if (list.size() == 0) {
-			throw new PlaceException(PlaceErrorCode.DELETED_NOTING);
-		}
+		List<Place> list = placeRepository.findAllByJourney(journey);
 
 		placeRepository.deleteAll(list);
 		awsS3Service.deleteFile(journey.getJourneyThumbnailUrl());

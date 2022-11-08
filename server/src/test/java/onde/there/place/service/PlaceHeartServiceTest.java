@@ -90,7 +90,7 @@ class PlaceHeartServiceTest {
 
 		//when
 		PlaceException exception = assertThrows(PlaceException.class,
-			() -> placeHeartService.heart(1L, "testMember"));
+			() -> placeHeartService.heart(100000000L, "testMember"));
 
 		//then
 		assertEquals(exception.getErrorCode(), PlaceErrorCode.NOT_FOUND_PLACE);
@@ -194,7 +194,7 @@ class PlaceHeartServiceTest {
 
 		//when
 		PlaceException exception = assertThrows(PlaceException.class,
-			() -> placeHeartService.unHeart(1L, "testMember"));
+			() -> placeHeartService.unHeart(100000000000L, "testMember"));
 
 		//then
 		assertEquals(exception.getErrorCode(), PlaceErrorCode.NOT_FOUND_PLACE);

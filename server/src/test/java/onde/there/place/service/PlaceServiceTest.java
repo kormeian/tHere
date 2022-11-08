@@ -11,7 +11,9 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import onde.there.domain.Journey;
+import onde.there.domain.Member;
 import onde.there.domain.Place;
+import onde.there.domain.PlaceHeart;
 import onde.there.domain.PlaceImage;
 import onde.there.domain.type.PlaceCategoryType;
 import onde.there.dto.place.PlaceDto;
@@ -20,8 +22,10 @@ import onde.there.dto.place.PlaceDto.Response;
 import onde.there.dto.place.PlaceDto.UpdateRequest;
 import onde.there.image.service.AwsS3Service;
 import onde.there.journey.repository.JourneyRepository;
+import onde.there.member.repository.MemberRepository;
 import onde.there.place.exception.PlaceErrorCode;
 import onde.there.place.exception.PlaceException;
+import onde.there.place.repository.PlaceHeartRepository;
 import onde.there.place.repository.PlaceImageRepository;
 import onde.there.place.repository.PlaceRepository;
 import org.junit.jupiter.api.DisplayName;
@@ -49,6 +53,12 @@ class PlaceServiceTest {
 	private JourneyRepository journeyRepository;
 
 	@Autowired
+	private PlaceHeartRepository placeHeartRepository;
+
+	@Autowired
+	private MemberRepository memberRepository;
+
+	@Autowired
 	private AwsS3Service awsS3Service;
 
 	@Test
@@ -60,7 +70,14 @@ class PlaceServiceTest {
 			FileInputStream fis = new FileInputStream("src/main/resources/testImages/" + file);
 			multipartFile.add(new MockMultipartFile(String.format("%d", i), file, "png", fis));
 		}
-		Journey journey = journeyRepository.save(new Journey());
+		Journey journey = journeyRepository.save(
+			Journey.builder()
+				.member(
+					memberRepository.save(Member.builder()
+						.id("memberId")
+						.build()))
+				.build()
+		);
 		PlaceDto.CreateRequest request = CreateRequest.builder()
 			.latitude(123.0)
 			.longitude(234.0)
@@ -77,10 +94,49 @@ class PlaceServiceTest {
 			.placeName("어딘가")
 			.build();
 		//when
-		Place place = placeService.createPlace(multipartFile, request);
+		Place place = placeService.createPlace(multipartFile, request, "memberId");
 		//then
 		assertEquals(place.getJourney().getId(), journey.getId());
-		assertEquals(3, placeImageRepository.count());
+		assertEquals(3, placeImageRepository.findAllByPlaceId(place.getId()).size());
+	}
+
+	@Test
+	void 장소_저장_작성자_불일치() throws IOException {
+		//given
+		List<MultipartFile> multipartFile = new ArrayList<>();
+		for (int i = 1; i <= 3; i++) {
+			String file = String.format("%d.png", i);
+			FileInputStream fis = new FileInputStream("src/main/resources/testImages/" + file);
+			multipartFile.add(new MockMultipartFile(String.format("%d", i), file, "png", fis));
+		}
+		Journey journey = journeyRepository.save(
+			Journey.builder()
+				.member(
+					memberRepository.save(Member.builder()
+						.id("memberId")
+						.build()))
+				.build()
+		);
+		PlaceDto.CreateRequest request = CreateRequest.builder()
+			.latitude(123.0)
+			.longitude(234.0)
+			.title("test")
+			.text("테스트 중 입니다.")
+			.addressName("경기도 김포시 고촌읍 어쩌구 저쩌구")
+			.region1("경기도")
+			.region2("김포시")
+			.region3("고촌읍")
+			.region4("어쩌구 저쩌구")
+			.placeTime(LocalDateTime.now())
+			.journeyId(journey.getId())
+			.placeCategory(PlaceCategoryType.NATURE.getDescription())
+			.placeName("어딘가")
+			.build();
+		//when
+		PlaceException placeException = assertThrows(PlaceException.class, () ->
+			placeService.createPlace(multipartFile, request, "ㅂㅈㄷㄱ"));
+		//then
+		assertEquals(placeException.getErrorCode(), PlaceErrorCode.MISMATCH_MEMBER_ID);
 	}
 
 	@Test
@@ -103,14 +159,14 @@ class PlaceServiceTest {
 			.region3("고촌읍")
 			.region4("어쩌구 저쩌구")
 			.placeTime(LocalDateTime.now())
-			.journeyId(1L)
+			.journeyId(1000000L)
 			.placeCategory(PlaceCategoryType.NATURE.getDescription())
 			.placeName("어딘가")
 			.build();
 		//when
 		//then
 		PlaceException placeException = assertThrows(PlaceException.class,
-			() -> placeService.createPlace(multipartFile, request));
+			() -> placeService.createPlace(multipartFile, request, "memberId"));
 		assertEquals(PlaceErrorCode.NOT_FOUND_JOURNEY.getDescription(),
 			placeException.getErrorMessage());
 	}
@@ -124,7 +180,10 @@ class PlaceServiceTest {
 			FileInputStream fis = new FileInputStream("src/main/resources/testImages/" + file);
 			multipartFile.add(new MockMultipartFile(String.format("%d", i), file, "png", fis));
 		}
-		Journey journey = journeyRepository.save(new Journey());
+		Journey journey = journeyRepository.save(Journey.builder()
+			.member(memberRepository.save(Member.builder()
+				.id("memberId").build()))
+			.build());
 		PlaceDto.CreateRequest request = CreateRequest.builder()
 			.latitude(123.0)
 			.longitude(234.0)
@@ -137,14 +196,14 @@ class PlaceServiceTest {
 			.region4("어쩌구 저쩌구")
 			.placeTime(LocalDateTime.now())
 			.journeyId(journey.getId())
-			.placeCategory("내츄럴")
+			.placeCategory("asdfa")
 			.placeName("어딘가")
 			.build();
 		//when
 		//then
 
 		PlaceException placeException = assertThrows(PlaceException.class,
-			() -> placeService.createPlace(multipartFile, request));
+			() -> placeService.createPlace(multipartFile, request, "memberId"));
 
 		assertEquals(PlaceErrorCode.MISMATCH_PLACE_CATEGORY_TYPE.getDescription(),
 			placeException.getErrorMessage());
@@ -162,28 +221,38 @@ class PlaceServiceTest {
 			.journey(journey)
 			.build();
 
-		Place save = placeRepository.save(place);
+		Place placeHeart2022 = Place.builder()
+			.text("테스트 장소 본문")
+			.title("테스트 장소 제목")
+			.placeCategory(PlaceCategoryType.ECT)
+			.placeHeartCount(2022)
+			.journey(journey)
+			.build();
 
-		placeImageRepository.save(PlaceImage.builder()
-			.place(save)
-			.imageUrl("url1")
-			.build());
+		Place savePlace = placeRepository.save(place);
+		Place savePlaceHeart2022 = placeRepository.save(placeHeart2022);
 
-		placeImageRepository.save(PlaceImage.builder()
-			.place(save)
-			.imageUrl("url1")
-			.build());
+		savePlace.setPlaceImages(List.of(
+			PlaceImage.builder().imageUrl("url1").build(),
+			PlaceImage.builder().imageUrl("url2").build()));
+
+		savePlaceHeart2022.setPlaceImages(List.of(
+			PlaceImage.builder().imageUrl("url1").build(),
+			PlaceImage.builder().imageUrl("url2").build()));
 
 		//when
-		PlaceDto.Response place1 = placeService.getPlace(save.getId());
+		PlaceDto.Response placeDto = placeService.getPlace(savePlace.getId());
+		PlaceDto.Response placeDtoHeart2022 = placeService.getPlace(savePlaceHeart2022.getId());
 
 		//then
-		assertEquals(place1.getPlaceId(), save.getId());
+		assertEquals(placeDto.getPlaceId(), savePlace.getId());
 
-		assertEquals(place1.getText(), "테스트 장소 본문");
-		assertEquals(place1.getTitle(), "테스트 장소 제목");
-		assertEquals(place1.getImageUrls().size(), 2);
-		assertEquals(place1.getImageUrls().get(0), "url1");
+		assertEquals(placeDto.getText(), "테스트 장소 본문");
+		assertEquals(placeDto.getTitle(), "테스트 장소 제목");
+		assertEquals(placeDto.getImageUrls().size(), 2);
+		assertEquals(placeDto.getImageUrls().get(0), "url1");
+		assertEquals(placeDtoHeart2022.getPlaceHeartCount(), "2k");
+
 	}
 
 	@DisplayName("01_01. getPlace fail not found place")
@@ -197,37 +266,114 @@ class PlaceServiceTest {
 		assertEquals(exception.getErrorCode(), PlaceErrorCode.NOT_FOUND_PLACE);
 	}
 
-	@DisplayName("02_00. list success")
+	@DisplayName("02_00_0. list success login and no hearted")
 	@Test
-	public void test_02_00() {
+	public void test_02_00_0() {
 		//given
 		Journey journey = journeyRepository.save(Journey.builder().build());
-		List<Long> placeIdes = new ArrayList<>();
+		List<PlaceImage> placeImages = new ArrayList<>();
+		for (int i = 0; i < 2; i++) {
+			placeImages.add(placeImageRepository.save(PlaceImage.builder()
+				.imageUrl("url" + i)
+				.build()));
+		}
+
 		for (int i = 0; i < 3; i++) {
 			Place save = placeRepository.save(Place.builder()
 				.journey(journey)
 				.placeCategory(PlaceCategoryType.ECT)
 				.placeTime(LocalDateTime.now().plusSeconds(i))
 				.build());
-			placeIdes.add(save.getId());
+			save.setPlaceImages(placeImages);
 		}
 
-		for (int i = 0; i < placeIdes.size(); i++) {
-			placeImageRepository.save(PlaceImage.builder()
+		//when
+		List<PlaceDto.Response> list = placeService.list(journey.getId(), "memberId");
+		System.out.println(list.get(0).getImageUrls());
+		//then
+		assertEquals(list.size(), 3);
+		assertEquals(list.get(0).getJourneyId(), list.get(1).getJourneyId());
+		assertEquals(list.get(0).getImageUrls().get(0), "url0");
+		assertEquals(list.get(1).getImageUrls().get(0), "url0");
+		assertEquals(list.get(2).getImageUrls().get(0), "url0");
+		assertFalse(list.get(0).isHeartedCheck());
+	}
+
+	@DisplayName("02_00_1. list success login hearted")
+	@Test
+	public void test_02_00_1() {
+		//given
+		Member member = new Member();
+		member.setId("memberId");
+		memberRepository.save(member);
+
+		Journey journey = journeyRepository.save(Journey.builder().build());
+		List<PlaceImage> placeImages = new ArrayList<>();
+		for (int i = 0; i < 2; i++) {
+			placeImages.add(placeImageRepository.save(PlaceImage.builder()
 				.imageUrl("url" + i)
-				.place(placeRepository.findById(placeIdes.get(i)).get())
+				.build()));
+		}
+
+		for (int i = 0; i < 3; i++) {
+			Place save = placeRepository.save(Place.builder()
+				.journey(journey)
+				.placeCategory(PlaceCategoryType.ECT)
+				.placeTime(LocalDateTime.now().plusSeconds(i))
+				.build());
+			save.setPlaceImages(placeImages);
+			placeHeartRepository.save(PlaceHeart.builder()
+				.place(save)
+				.member(member)
 				.build());
 		}
 
 		//when
-		List<PlaceDto.Response> list = placeService.list(journey.getId());
+		List<PlaceDto.Response> list = placeService.list(journey.getId(), "memberId");
+
+		for (int i = 0; i < list.size(); i++) {
+			System.out.println(list.get(i));
+		}
+		//then
+		assertEquals(list.size(), 3);
+		assertEquals(list.get(0).getJourneyId(), list.get(1).getJourneyId());
+		assertEquals(list.get(0).getImageUrls().get(0), "url0");
+		assertEquals(list.get(1).getImageUrls().get(0), "url0");
+		assertEquals(list.get(2).getImageUrls().get(0), "url0");
+		assertTrue(list.get(0).isHeartedCheck());
+	}
+
+	@DisplayName("02_00_2. list success no login ")
+	@Test
+	public void test_02_00_2() {
+		//given
+		Journey journey = journeyRepository.save(Journey.builder().build());
+		List<PlaceImage> placeImages = new ArrayList<>();
+		for (int i = 0; i < 2; i++) {
+			placeImages.add(placeImageRepository.save(PlaceImage.builder()
+				.imageUrl("url" + i)
+				.build()));
+		}
+
+		for (int i = 0; i < 3; i++) {
+			Place save = placeRepository.save(Place.builder()
+				.journey(journey)
+				.placeCategory(PlaceCategoryType.ECT)
+				.placeTime(LocalDateTime.now().plusSeconds(i))
+				.build());
+			save.setPlaceImages(placeImages);
+		}
+
+		//when
+		List<PlaceDto.Response> list = placeService.list(journey.getId(), "");
 
 		//then
 		assertEquals(list.size(), 3);
 		assertEquals(list.get(0).getJourneyId(), list.get(1).getJourneyId());
 		assertEquals(list.get(0).getImageUrls().get(0), "url0");
-		assertEquals(list.get(1).getImageUrls().get(0), "url1");
-		assertEquals(list.get(2).getImageUrls().get(0), "url2");
+		assertEquals(list.get(1).getImageUrls().get(0), "url0");
+		assertEquals(list.get(2).getImageUrls().get(0), "url0");
+		assertFalse(list.get(0).isHeartedCheck());
 	}
 
 
@@ -238,7 +384,7 @@ class PlaceServiceTest {
 
 		//when
 		PlaceException placeException = assertThrows(PlaceException.class,
-			() -> placeService.list(1000000L));
+			() -> placeService.list(1000000L, "memberId"));
 
 		//then
 		assertEquals(placeException.getErrorCode(), PlaceErrorCode.NOT_FOUND_JOURNEY);
@@ -250,7 +396,14 @@ class PlaceServiceTest {
 	@Test
 	public void test_03_00() {
 		//given
-		Place save = placeRepository.save(Place.builder().build());
+
+		Place save = placeRepository.save(Place.builder()
+			.journey(journeyRepository.save(Journey.builder()
+				.member(memberRepository.save(Member.builder()
+					.id("memberId")
+					.build()))
+				.build()))
+			.build());
 
 		List<Long> placeImageId = new ArrayList<>();
 		for (int i = 0; i < 3; i++) {
@@ -262,7 +415,7 @@ class PlaceServiceTest {
 		}
 
 		//when
-		boolean delete = placeService.delete(save.getId());
+		boolean delete = placeService.delete(save.getId(), "memberId");
 		//then
 		assertTrue(delete);
 		for (Long aLong : placeImageId) {
@@ -277,17 +430,50 @@ class PlaceServiceTest {
 
 		//when
 		PlaceException placeException = assertThrows(PlaceException.class,
-			() -> placeService.delete(100011L));
+			() -> placeService.delete(100011L, "memberId"));
 
 		//then
 		assertEquals(placeException.getErrorCode(), PlaceErrorCode.NOT_FOUND_PLACE);
+	}
+
+	@DisplayName("03_02. delete fail member mismatch")
+	@Test
+	public void test_03_02() {
+		//given
+		Place save = placeRepository.save(Place.builder()
+			.journey(journeyRepository.save(Journey.builder()
+				.member(memberRepository.save(Member.builder()
+					.id("memberId")
+					.build()))
+				.build()))
+			.build());
+
+		List<Long> placeImageId = new ArrayList<>();
+		for (int i = 0; i < 3; i++) {
+			PlaceImage p = placeImageRepository.save(PlaceImage.builder()
+				.place(save)
+				.imageUrl("url")
+				.build());
+			placeImageId.add(p.getId());
+		}
+
+		//when
+		PlaceException placeException = assertThrows(PlaceException.class,
+			() -> placeService.delete(save.getId(), "asdf"));
+		//then
+		assertEquals(placeException.getErrorCode(), PlaceErrorCode.MISMATCH_MEMBER_ID);
 	}
 
 	@DisplayName("04_00. deleteAll success")
 	@Test
 	public void test_04_00() {
 		//given
-		Journey save = journeyRepository.save(Journey.builder().build());
+		Journey save = journeyRepository.save(
+			Journey.builder()
+				.member(memberRepository.save(Member.builder()
+					.id("memberId")
+					.build()))
+				.build());
 		journeyRepository.save(save);
 
 		Place save1 = placeRepository.save(Place.builder().journey(save).build());
@@ -315,7 +501,7 @@ class PlaceServiceTest {
 		}
 
 		//when
-		boolean result = placeService.deleteAll(save.getId());
+		boolean result = placeService.deleteAll(save.getId(), "memberId");
 
 		List<Boolean> placeImageDeletedCheck = new ArrayList<>();
 		for (Long placeImageIde : placeImageIdes) {
@@ -333,12 +519,17 @@ class PlaceServiceTest {
 	@Test
 	public void test_04_01() {
 		//given
-		Journey save = journeyRepository.save(Journey.builder().build());
+		Journey save = journeyRepository.save(
+			Journey.builder()
+				.member(memberRepository.save(Member.builder()
+					.id("memberId")
+					.build()))
+				.build());
 		journeyRepository.save(save);
 
 		//when
 		PlaceException placeException = assertThrows(PlaceException.class,
-			() -> placeService.deleteAll(save.getId()));
+			() -> placeService.deleteAll(save.getId(), "memberId"));
 
 		//then
 		assertEquals(placeException.getErrorCode(), PlaceErrorCode.DELETED_NOTING);
@@ -350,17 +541,43 @@ class PlaceServiceTest {
 		//given
 		//when
 		PlaceException placeException = assertThrows(PlaceException.class,
-			() -> placeService.deleteAll(100000L));
+			() -> placeService.deleteAll(100000L, "memberId"));
 
 		//then
 		assertEquals(placeException.getErrorCode(), PlaceErrorCode.NOT_FOUND_JOURNEY);
+	}
+
+	@DisplayName("04_03. deleteAll success")
+	@Test
+	public void test_04_03() {
+		//given
+		Journey save = journeyRepository.save(
+			Journey.builder()
+				.member(memberRepository.save(Member.builder()
+					.id("memberId")
+					.build()))
+				.build());
+		journeyRepository.save(save);
+
+		List<Long> placeImageIdes = new ArrayList<>();
+
+		//when
+		PlaceException placeException = assertThrows(PlaceException.class,
+			() -> placeService.deleteAll(save.getId(), "asdf"));
+
+		//then
+		assertEquals(placeException.getErrorCode(), PlaceErrorCode.MISMATCH_MEMBER_ID);
 	}
 
 	@DisplayName("05_00. updatePlace success")
 	@Test
 	public void test_05_00() throws IOException {
 		//given
-		Journey saveJourney = journeyRepository.save(Journey.builder().build());
+		Journey saveJourney = journeyRepository.save(Journey.builder()
+			.member(memberRepository.save(Member.builder()
+				.id("memberId")
+				.build()))
+			.build());
 
 		Place savePlace = placeRepository.save(Place.builder()
 			.latitude(1.0)
@@ -414,7 +631,7 @@ class PlaceServiceTest {
 			.journeyId(saveJourney.getId())
 			.build();
 
-		Response response = placeService.updatePlace(multipartFile, updateRequest);
+		Response response = placeService.updatePlace(multipartFile, updateRequest, "memberId");
 
 		//then
 		assertEquals(response.getImageUrls().size(), 3);
@@ -470,7 +687,7 @@ class PlaceServiceTest {
 			.build();
 
 		PlaceException placeException = assertThrows(PlaceException.class,
-			() -> placeService.updatePlace(multipartFile, updateRequest));
+			() -> placeService.updatePlace(multipartFile, updateRequest, "memberId"));
 
 		//then
 		assertEquals(placeException.getErrorCode(), PlaceErrorCode.NOT_FOUND_PLACE);
@@ -480,7 +697,11 @@ class PlaceServiceTest {
 	@Test
 	public void test_05_02() throws IOException {
 		//given
-		Journey saveJourney = journeyRepository.save(Journey.builder().build());
+		Journey saveJourney = journeyRepository.save(Journey.builder()
+			.member(memberRepository.save(Member.builder()
+				.id("memberId")
+				.build()))
+			.build());
 
 		Place savePlace =
 			placeRepository.save(Place.builder()
@@ -536,9 +757,68 @@ class PlaceServiceTest {
 			.build();
 
 		PlaceException placeException = assertThrows(PlaceException.class,
-			() -> placeService.updatePlace(multipartFile, updateRequest));
+			() -> placeService.updatePlace(multipartFile, updateRequest, "memberId"));
 
 		//then
 		assertEquals(placeException.getErrorCode(), PlaceErrorCode.MISMATCH_PLACE_CATEGORY_TYPE);
+	}
+
+	@DisplayName("05_03. updatePlace fail memberId mismatch")
+	@Test
+	public void test_05_03() throws IOException {
+		//given
+		Journey saveJourney = journeyRepository.save(Journey.builder()
+			.member(memberRepository.save(Member.builder()
+				.id("memberId")
+				.build()))
+			.build());
+
+		Place savePlace = placeRepository.save(Place.builder()
+			.latitude(1.0)
+			.longitude(1.0)
+			.title("title test")
+			.text("text test")
+			.addressName("total address")
+			.region1("place name1")
+			.region2("place name2")
+			.region3("place name3")
+			.region4("place name4")
+			.placeName("place name")
+			.placeTime(LocalDateTime.now())
+			.placeCategory(PlaceCategoryType.ECT)
+			.journey(saveJourney)
+			.placeHeartCount(0)
+			.build());
+
+		List<MultipartFile> multipartFile = new ArrayList<>();
+		for (int i = 1; i <= 3; i++) {
+			String file = String.format("%d.png", i);
+			FileInputStream fis = new FileInputStream("src/main/resources/testImages/" + file);
+			multipartFile.add(new MockMultipartFile(String.format("%d", i), file, "png", fis));
+		}
+
+		//when
+		UpdateRequest updateRequest = UpdateRequest.builder()
+			.placeId(savePlace.getId())
+			.latitude(1.0)
+			.longitude(1.0)
+			.title("title test update")
+			.text("text test update")
+			.addressName("total address update")
+			.region1("place name1 update")
+			.region2("place name2 update")
+			.region3("place name3 update")
+			.region4("place name4 update")
+			.placeName("place name update")
+			.placeTime(LocalDateTime.now().minusDays(1))
+			.placeCategory("자연")
+			.journeyId(saveJourney.getId())
+			.build();
+
+		PlaceException placeException = assertThrows(PlaceException.class,
+			() -> placeService.updatePlace(multipartFile, updateRequest, "asdf"));
+
+		//then
+		assertEquals(placeException.getErrorCode(), PlaceErrorCode.MISMATCH_MEMBER_ID);
 	}
 }

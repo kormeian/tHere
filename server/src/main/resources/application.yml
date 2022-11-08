@@ -5,7 +5,6 @@ spring:
       - classpath:db-connection.yml
       - classpath:mail.yml
       - classpath:oauth2.yml
-
 springdoc:
   swagger-ui:
     path: /api-doc.html

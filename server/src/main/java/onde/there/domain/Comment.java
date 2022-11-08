@@ -30,16 +30,16 @@ public class Comment {
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "place_id", nullable = false)
 	private Place place;
-	private String comment;
+	private String text;
 
 	@Builder
-	public Comment(Member member, Place place, String comment) {
+	public Comment(Member member, Place place, String text) {
 		this.member = member;
 		this.place = place;
-		this.comment = comment;
+		this.text = text;
 	}
 
 	public void updateComment(String comment){
-		this.comment = comment;
+		this.text = comment;
 	}
 }

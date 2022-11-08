@@ -2,6 +2,7 @@ package onde.there.member.security;
 
 import lombok.RequiredArgsConstructor;
 import onde.there.member.security.jwt.JwtAuthenticationFilter;
+import onde.there.member.security.jwt.JwtExceptionFilter;
 import onde.there.member.security.jwt.JwtService;
 import onde.there.member.security.oauth2.OAuth2AuthenticationSuccessHandler;
 import onde.there.member.security.oauth2.Oauth2MemberService;
@@ -74,7 +75,8 @@ public class SecurityConfig {
                 .and()
                 .successHandler(oAuth2AuthenticationSuccessHandler)
                 .and()
-                .addFilterBefore(new JwtAuthenticationFilter(jwtService), UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(new JwtAuthenticationFilter(jwtService), UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(new JwtExceptionFilter(), JwtAuthenticationFilter.class);
 
         return http.build();
     }

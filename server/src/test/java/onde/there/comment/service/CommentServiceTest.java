@@ -19,6 +19,9 @@ import onde.there.place.repository.PlaceRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest
@@ -41,16 +44,15 @@ class CommentServiceTest {
 		Place place = placeRepository.save(new Place());
 		CommentDto.CreateRequest request =
 			CommentDto.CreateRequest.builder()
-				.memberId(member.getId())
 				.placeId(place.getId())
-				.comment("댓글입니다.")
+				.text("댓글입니다.")
 				.build();
 		//when
-		Comment comment = commentService.createComment(request);
+		Comment comment = commentService.createComment(request, member.getId());
 		//then
 		assertEquals(member.getId(), comment.getMember().getId());
 		assertEquals(place.getId(), comment.getPlace().getId());
-		assertEquals(request.getComment(), comment.getComment());
+		assertEquals(request.getText(), comment.getText());
 	}
 
 	@Test
@@ -60,13 +62,12 @@ class CommentServiceTest {
 		Place place = placeRepository.save(new Place());
 		CommentDto.CreateRequest request =
 			CommentDto.CreateRequest.builder()
-				.memberId("2")
 				.placeId(place.getId())
-				.comment("댓글입니다.")
+				.text("댓글입니다.")
 				.build();
 		//when
 		CommentException commentException = assertThrows(CommentException.class,
-			() -> commentService.createComment(request));
+			() -> commentService.createComment(request, "any member ID"));
 		//then
 		assertEquals(CommentErrorCode.NOT_FOUND_MEMBER, commentException.getErrorCode());
 	}
@@ -78,13 +79,12 @@ class CommentServiceTest {
 		Place place = placeRepository.save(new Place());
 		CommentDto.CreateRequest request =
 			CommentDto.CreateRequest.builder()
-				.memberId(member.getId())
-				.placeId(123L)
-				.comment("댓글입니다.")
+				.placeId(1000000000L)
+				.text("댓글입니다.")
 				.build();
 		//when
 		CommentException commentException = assertThrows(CommentException.class,
-			() -> commentService.createComment(request));
+			() -> commentService.createComment(request, member.getId()));
 		//then
 		assertEquals(CommentErrorCode.NOT_FOUND_PLACE, commentException.getErrorCode());
 	}
@@ -98,17 +98,17 @@ class CommentServiceTest {
 		for (int i = 0; i < 3; i++) {
 			String commentText = String.format("%d번째 댓글", i);
 			comments.add(commentService.createComment(CommentDto.CreateRequest.builder()
-				.memberId(member.getId())
-				.placeId(place.getId())
-				.comment(commentText)
-				.build()));
+					.placeId(place.getId())
+					.text(commentText).build()
+				, member.getId()));
 		}
+		Pageable pageable = PageRequest.of(0, 3);
 		//when
-		List<CommentDto.Response> responses = commentService.getComments(place.getId());
+		Page<Response> responses = commentService.getComments(place.getId(), pageable);
 		//then
 		for (Response response : responses) {
-			System.out.println(response.getComment());
-			assertFalse(comments.contains(response.getComment()));
+			System.out.println(response.getText());
+			assertFalse(comments.contains(response.getText()));
 		}
 	}
 
@@ -121,14 +121,14 @@ class CommentServiceTest {
 		for (int i = 0; i < 3; i++) {
 			String commentText = String.format("%d번째 댓글", i);
 			comments.add(commentService.createComment(CommentDto.CreateRequest.builder()
-				.memberId(member.getId())
-				.placeId(place.getId())
-				.comment(commentText)
-				.build()));
+					.placeId(place.getId())
+					.text(commentText).build()
+				, member.getId()));
 		}
+		Pageable pageable = PageRequest.of(0, 3);
 		//when
 		CommentException commentException = assertThrows(CommentException.class,
-			() -> commentService.getComments(123L));
+			() -> commentService.getComments(10000000L, pageable));
 		//then
 		assertEquals(CommentErrorCode.NOT_FOUND_PLACE, commentException.getErrorCode());
 	}
@@ -138,19 +138,13 @@ class CommentServiceTest {
 		//given
 		Member member = memberRepository.save(new Member("asd", "", "", ""));
 		Place place = placeRepository.save(new Place());
-		List<Comment> comments = new ArrayList<>();
-		for (int i = 0; i < 3; i++) {
-			String commentText = String.format("%d번째 댓글", i);
-			comments.add(commentService.createComment(CommentDto.CreateRequest.builder()
-				.memberId(member.getId())
-				.placeId(place.getId())
-				.comment(commentText)
-				.build()));
-		}
+
 		//when
-		List<Response> commentList = commentService.getComments(123L);
+
+		Page<Response> commentList = commentService.getComments(place.getId(),
+			PageRequest.of(0, 10));
 		//then
-		assertEquals(0, commentList.size());
+		assertEquals(0, commentList.getContent().size());
 	}
 
 	@Test
@@ -160,23 +154,22 @@ class CommentServiceTest {
 		Place place = placeRepository.save(new Place());
 		CommentDto.CreateRequest request =
 			CommentDto.CreateRequest.builder()
-				.memberId(member.getId())
 				.placeId(place.getId())
-				.comment("댓글입니다.")
+				.text("댓글입니다.")
 				.build();
-		Comment comment = commentService.createComment(request);
+		Comment comment = commentService.createComment(request, member.getId());
 
 		CommentDto.UpdateRequest updateRequest =
 			CommentDto.UpdateRequest.builder()
 				.commentId(comment.getId())
-				.comment("수정된 댓글입니다.")
+				.text("수정된 댓글입니다.")
 				.build();
 		//when
-		Long id = commentService.updateComment(updateRequest);
+		Comment updateComment = commentService.updateComment(updateRequest, member.getId());
 		//then
-		assertEquals(comment.getId(), id);
-		assertEquals(updateRequest.getComment(),
-			commentRepository.findById(id).orElseThrow().getComment());
+		assertEquals(comment.getId(), updateComment.getId());
+		assertEquals(updateRequest.getText(),
+			commentRepository.findById(updateComment.getId()).orElseThrow().getText());
 	}
 
 	@Test
@@ -186,20 +179,19 @@ class CommentServiceTest {
 		Place place = placeRepository.save(new Place());
 		CommentDto.CreateRequest request =
 			CommentDto.CreateRequest.builder()
-				.memberId(member.getId())
 				.placeId(place.getId())
-				.comment("댓글입니다.")
+				.text("댓글입니다.")
 				.build();
-		Comment comment = commentService.createComment(request);
+		Comment comment = commentService.createComment(request, member.getId());
 
 		CommentDto.UpdateRequest updateRequest =
 			CommentDto.UpdateRequest.builder()
-				.commentId(123L)
-				.comment("수정된 댓글입니다.")
+				.commentId(place.getId())
+				.text("수정된 댓글입니다.")
 				.build();
 		//when
 		CommentException commentException = assertThrows(CommentException.class,
-			() -> commentService.updateComment(updateRequest));
+			() -> commentService.updateComment(updateRequest, member.getId()));
 		//then
 		assertEquals(CommentErrorCode.NOT_FOUND_COMMENT, commentException.getErrorCode());
 	}
@@ -211,15 +203,14 @@ class CommentServiceTest {
 		Place place = placeRepository.save(new Place());
 		CommentDto.CreateRequest request =
 			CommentDto.CreateRequest.builder()
-				.memberId(member.getId())
 				.placeId(place.getId())
-				.comment("댓글입니다.")
+				.text("댓글입니다.")
 				.build();
-		Comment comment = commentService.createComment(request);
+		Comment comment = commentService.createComment(request, member.getId());
 		//when
-		commentService.deleteComment(comment.getId());
+		commentService.deleteComment(comment.getId(), member.getId());
 		//then
-		assertEquals(0, commentRepository.count());
+		assertFalse(commentRepository.existsById(comment.getId()));
 	}
 
 	@Test
@@ -229,14 +220,13 @@ class CommentServiceTest {
 		Place place = placeRepository.save(new Place());
 		CommentDto.CreateRequest request =
 			CommentDto.CreateRequest.builder()
-				.memberId(member.getId())
 				.placeId(place.getId())
-				.comment("댓글입니다.")
+				.text("댓글입니다.")
 				.build();
-		Comment comment = commentService.createComment(request);
+		Comment comment = commentService.createComment(request, member.getId());
 		//when
 		CommentException commentException = assertThrows(CommentException.class,
-			() -> commentService.deleteComment(123L));
+			() -> commentService.deleteComment(100000000L, member.getId()));
 		//then
 		assertEquals(CommentErrorCode.NOT_FOUND_COMMENT, commentException.getErrorCode());
 	}

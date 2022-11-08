@@ -1,12 +1,14 @@
 package onde.there.member;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import onde.there.domain.Member;
 import onde.there.dto.member.MemberDto;
-import onde.there.member.exception.type.MemberErrorCode;
 import onde.there.member.exception.MemberException;
+import onde.there.member.exception.type.MemberErrorCode;
 import onde.there.member.security.jwt.JwtService;
-import onde.there.member.utils.MailService;
 import onde.there.member.service.MemberService;
+import onde.there.member.utils.MailService;
 import onde.there.member.utils.RedisService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,8 +17,6 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
 public class MemberServiceTest {

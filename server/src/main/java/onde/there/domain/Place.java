@@ -1,6 +1,8 @@
 package onde.there.domain;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
@@ -11,12 +13,15 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 import onde.there.domain.type.PlaceCategoryType;
+import org.hibernate.annotations.BatchSize;
 
 @Builder
 @AllArgsConstructor
@@ -24,6 +29,7 @@ import onde.there.domain.type.PlaceCategoryType;
 @Setter
 @Getter
 @Entity
+@ToString
 public class Place {
 
 	@Id
@@ -36,6 +42,7 @@ public class Place {
 
 	private String title;
 
+	@Column(length = 1010)
 	private String text;
 
 	private String addressName;
@@ -60,4 +67,14 @@ public class Place {
 
 	private long placeHeartCount;
 
+	@BatchSize(size = 10)
+	@OneToMany(mappedBy = "place")
+	private List<PlaceImage> placeImages = new ArrayList<>();
+
+	public void setPlaceImages(List<PlaceImage> placeImages) {
+		this.placeImages = placeImages;
+		for (PlaceImage placeImage : placeImages) {
+			placeImage.setPlace(this);
+		}
+	}
 }

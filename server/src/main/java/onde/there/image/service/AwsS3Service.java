@@ -122,8 +122,10 @@ public class AwsS3Service {
 	}
 
 	public ResponseEntity<byte[]> getImageFiles(String imageUrl) throws IOException {
+		log.info("getImageFiles : 이미지 S3에서 파일 불러오기 시작! (url : " + imageUrl + ")");
 		HttpHeaders httpHeaders = new HttpHeaders();
 		String url = imageUrl.replaceAll(baseUrl, "");
+		log.info("getImageFiles : 수정된 url (url : " + url + ")");
 		S3Object o = amazonS3.getObject(new GetObjectRequest(bucket, url));
 		S3ObjectInputStream objectInputStream = o.getObjectContent();
 
@@ -138,7 +140,7 @@ public class AwsS3Service {
 		httpHeaders.setContentType(MediaType.IMAGE_PNG);
 		httpHeaders.setContentLength(bytes.length);
 		httpHeaders.setContentDispositionFormData("attachment", fileName);
-
+		log.info("getImageFiles : 이미지 S3에서 파일 불러오기 끝! (url : " + imageUrl + ")");
 		return new ResponseEntity<>(bytes, httpHeaders, HttpStatus.OK);
 	}
 }

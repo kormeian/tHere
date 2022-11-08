@@ -43,6 +43,7 @@ dependencies {
 
     implementation "com.querydsl:querydsl-jpa:${queryDslVersion}"
 
+    runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'
     compileOnly 'org.projectlombok:lombok'
     runtimeOnly 'com.h2database:h2'
     runtimeOnly 'mysql:mysql-connector-java'

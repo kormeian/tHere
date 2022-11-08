@@ -33,7 +33,7 @@ public class TokenMemberDecodeResolver implements HandlerMethodArgumentResolver 
     public Object resolveArgument(MethodParameter parameter, ModelAndViewContainer mavContainer, NativeWebRequest webRequest, WebDataBinderFactory binderFactory) throws Exception {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication.getPrincipal().equals(ANONYMOUS_USER)) {
-            throw new MemberException(MemberErrorCode.AUTHORIZATION_HEADER_NOT_EMPTY);
+            return null;
         }
         Member member = (Member) authentication.getPrincipal();
         return member.getId();

@@ -53,6 +53,10 @@ public class PlaceService {
 			throw new PlaceException(PlaceErrorCode.MISMATCH_MEMBER_ID);
 		}
 
+		if (placeRepository.countAllByJourneyId(request.getJourneyId()) >= 10) {
+			throw new PlaceException(PlaceErrorCode.MAX_PLACE_NUM);
+		}
+
 		Place place = request.toEntity();
 		place.setJourney(journey);
 		Place savePlace = placeRepository.save(place);

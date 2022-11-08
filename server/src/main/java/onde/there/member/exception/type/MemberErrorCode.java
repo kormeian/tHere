@@ -18,6 +18,7 @@ public enum MemberErrorCode {
     UNSUPPORTED_TOKEN("지원하지 않는 토큰 입니다"),
     TOKEN_CLAIMS_EMPTY("토큰 claims가 비어있습니다"),
     AUTHORIZATION_HEADER_NOT_EMPTY("인증 헤더 값이 비어있습니다"),
+    AUTHORITY_ERROR("권한 없는 유저 입니다"),
     SIGNUP_CONFIRM_TIMEOUT("인증 시간이 만료되었습니다 다시 요청 해 주세요!");
     private final String description;
 }

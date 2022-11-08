@@ -45,9 +45,9 @@ public class AuthController {
 
     @Operation(summary = "로그아웃", description = "로그아웃")
     @PostMapping("/signout")
-    public ResponseEntity<Void> signout(@Validated @RequestBody MemberDto.SignoutRequest signoutRequest) {
+    public ResponseEntity<String> signout(@Validated @RequestBody MemberDto.SignoutRequest signoutRequest) {
         log.info("signout request => {}", signoutRequest);
         authService.signout(signoutRequest);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok().body("로그아웃 되었습니다.");
     }
 }

@@ -13,4 +13,5 @@ public interface PlaceRepository extends JpaRepository<Place, Long> {
 	List<Place> findAllByJourneyOrderByPlaceTimeAsc(Journey journey);
 
 	Integer deleteAllByJourneyId(Long journeyId);
+	List<Place> findAllByJourney(Journey journey);
 }

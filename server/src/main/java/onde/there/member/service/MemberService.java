@@ -32,9 +32,6 @@ public class MemberService {
     private final PasswordEncoder passwordEncoder;
     private final MailService mailService;
     private final RedisService<Member> memberRedisService;
-    private final RedisService<String> tokenRedisService;
-    private final JwtService jwtService;
-    private final AuthenticationManagerBuilder authenticationManagerBuilder;
     private final AwsS3Service awsS3Service;
 
     public boolean checkId(MemberDto.CheckIdRequest checkIdRequest) {
@@ -43,6 +40,10 @@ public class MemberService {
 
     public boolean checkEmail(MemberDto.CheckEmailRequest checkEmailRequest) {
         return !memberRepository.existsByEmail(checkEmailRequest.getEmail());
+    }
+
+    public boolean checkNickName(String nickName) {
+        return !memberRepository.existsByNickName(nickName);
     }
 
     public Member sendSignupMail(MemberDto.SignupRequest signupRequest) {
@@ -65,9 +66,11 @@ public class MemberService {
 
             throw memberException;
         }
+
         String uuid = UUID.randomUUID().toString();
         String encodedPassword = passwordEncoder.encode(signupRequest.getPassword());
         Member member = Member.from(signupRequest, encodedPassword);
+
         mailService.sendSignupMail(uuid, member);
         memberRedisService.set(uuid, member, 10, TimeUnit.MINUTES);
         return member;
@@ -83,72 +86,10 @@ public class MemberService {
                     log.error("exception => {}", memberException.toString());
                     return memberException;
                 });
+
         memberRedisService.delete(key);
         memberRepository.save(member);
         return member;
-    }
-
-    public MemberDto.SigninResponse signin(MemberDto.SigninRequest signinRequest) {
-        memberRepository.findById(signinRequest.getId())
-                .orElseThrow(() -> {
-                    MemberException memberException = new MemberException(MemberErrorCode.MEMBER_NOT_FOUND);
-                    log.error("memberService.signin Error");
-                    log.error("request => {}", signinRequest);
-                    log.error("exception => {}", memberException.toString());
-                    return memberException;
-                });
-
-        UsernamePasswordAuthenticationToken authenticationToken = signinRequest.toAuthentication();
-        Authentication authentication = authenticationManagerBuilder.getObject().authenticate(authenticationToken);
-        MemberDto.SigninResponse signinResponse = jwtService.generateToken(authentication);
-        tokenRedisService.set("RT:"+ authentication.getName(),
-                                    signinResponse.getRefreshToken(),
-                                    signinResponse.getRefreshTokenExpirationTime(), TimeUnit.MILLISECONDS);
-
-        return signinResponse;
-    }
-
-    public MemberDto.AuthResponse auth(String memberId) {
-        Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> {
-                    MemberException memberException = new MemberException(MemberErrorCode.MEMBER_NOT_FOUND);
-                    log.error("memberService.auth Error");
-                    log.error("request id => {}", memberId);
-                    log.error("exception => {}", memberException.toString());
-                    return memberException;
-                });
-
-        return MemberDto.AuthResponse.builder()
-                .id(member.getId())
-                .email(member.getEmail())
-                .name(member.getName())
-                .nickName(member.getNickName())
-                .profileImageUrl(member.getProfileImageUrl())
-                .build();
-    }
-
-    public MemberDto.SigninResponse reissue(MemberDto.ReissueRequest request) {
-        jwtService.validateToken(request.getRefreshToken(), TokenType.REFRESH);
-        Authentication authentication = jwtService.getAuthentication(request.getAccessToken());
-        String refreshToken = tokenRedisService.get("RT:"+authentication.getName())
-                .orElseThrow(() -> {
-                    MemberException memberException = new MemberException(MemberErrorCode.INVALID_REFRESH_TOKEN);
-                    log.error("memberService.reissue Error");
-                    log.error("request => {}", request);
-                    log.error("exception => {}", memberException.toString());
-                    return memberException;
-                });
-
-        if (!refreshToken.equals(request.getRefreshToken())) {
-            throw new MemberException(MemberErrorCode.INVALID_REFRESH_TOKEN);
-        }
-
-        MemberDto.SigninResponse signinResponse = jwtService.generateToken(authentication);
-        tokenRedisService.set("RT:"+ authentication.getName(),
-                signinResponse.getRefreshToken(),
-                signinResponse.getRefreshTokenExpirationTime(), TimeUnit.MILLISECONDS);
-
-        return signinResponse;
     }
 
     @Transactional
@@ -162,14 +103,13 @@ public class MemberService {
                     return memberException;
                 });
 
+        String profileUrl = parseUpdateProfileUrl(multipartFile, member);
+        String encodedPassword = parseUpdatedEncodedPassword(updateRequest, member);
+        member.update(updateRequest, encodedPassword, profileUrl);
+        return member;
+    }
 
-        String profileUrl = null;
-        if (multipartFile.isEmpty()) {
-            profileUrl = member.getProfileImageUrl();
-        } else {
-            profileUrl = awsS3Service.uploadFiles(List.of(multipartFile)).get(0);
-        }
-
+    private String parseUpdatedEncodedPassword(MemberDto.UpdateRequest updateRequest, Member member) {
         String encodedPassword = null;
 
         if (updateRequest.getPassword().equals("")) {
@@ -177,8 +117,18 @@ public class MemberService {
         } else {
             encodedPassword= passwordEncoder.encode(updateRequest.getPassword());
         }
-
-        member.update(updateRequest, encodedPassword, profileUrl);
-        return member;
+        return encodedPassword;
     }
+
+    private String parseUpdateProfileUrl(MultipartFile multipartFile, Member member) {
+        String profileUrl = null;
+        if (multipartFile.isEmpty()) {
+            profileUrl = member.getProfileImageUrl();
+        } else {
+            profileUrl = awsS3Service.uploadFiles(List.of(multipartFile)).get(0);
+        }
+        return profileUrl;
+    }
+
+
 }

@@ -83,6 +83,7 @@ public class JourneyDto {
 		private String journeyThumbnailUrl;
 		private List<String> journeyThemes;
 		private String region;
+		private String profileImageUrl;
 
 
 		public static JourneyDto.CreateResponse fromEntity(Journey journey,
@@ -99,6 +100,7 @@ public class JourneyDto {
 				.introductionText(journey.getIntroductionText())
 				.region(journey.getRegion().getRegionName())
 				.journeyThumbnailUrl(journey.getJourneyThumbnailUrl())
+				.profileImageUrl(journey.getMember().getProfileImageUrl())
 				.build();
 		}
 	}
@@ -121,6 +123,7 @@ public class JourneyDto {
 		private String introductionText;
 		private String region;
 		private String journeyThumbnailUrl;
+		private String profileImageUrl;
 
 		public static JourneyDto.JourneyListResponse fromEntity(Journey journey,
 			List<String> journeyThemes) {
@@ -136,6 +139,7 @@ public class JourneyDto {
 				.introductionText(journey.getIntroductionText())
 				.region(journey.getRegion().getRegionName())
 				.journeyThumbnailUrl(journey.getJourneyThumbnailUrl())
+				.profileImageUrl(journey.getMember().getProfileImageUrl())
 				.build();
 		}
 
@@ -207,6 +211,7 @@ public class JourneyDto {
 		private String journeyThumbnailUrl;
 		private List<String> journeyThemes;
 		private String region;
+		private String profileImageUrl;
 
 
 		public static JourneyDto.UpdateResponse fromEntity(Journey journey,
@@ -223,6 +228,7 @@ public class JourneyDto {
 				.introductionText(journey.getIntroductionText())
 				.region(journey.getRegion().getRegionName())
 				.journeyThumbnailUrl(journey.getJourneyThumbnailUrl())
+				.profileImageUrl(journey.getMember().getProfileImageUrl())
 				.build();
 		}
 	}
@@ -245,6 +251,7 @@ public class JourneyDto {
 		private String journeyThumbnailUrl;
 		private List<String> journeyThemes;
 		private String region;
+		private String profileImageUrl;
 
 
 		public static JourneyDto.DetailResponse fromEntity(Journey journey,
@@ -261,6 +268,7 @@ public class JourneyDto {
 				.introductionText(journey.getIntroductionText())
 				.region(journey.getRegion().getRegionName())
 				.journeyThumbnailUrl(journey.getJourneyThumbnailUrl())
+				.profileImageUrl(journey.getMember().getProfileImageUrl())
 				.build();
 		}
 	}
@@ -303,6 +311,7 @@ public class JourneyDto {
 		private String journeyThumbnailUrl;
 		private List<String> journeyThemes;
 		private String region;
+		private String profileImageUrl;
 
 
 		public static JourneyDto.FilteringResponse fromEntity(Journey journey) {
@@ -320,6 +329,7 @@ public class JourneyDto {
 				.introductionText(journey.getIntroductionText())
 				.region(journey.getRegion().getRegionName())
 				.journeyThumbnailUrl(journey.getJourneyThumbnailUrl())
+				.profileImageUrl(journey.getMember().getProfileImageUrl())
 				.build();
 		}
 	}
@@ -342,6 +352,7 @@ public class JourneyDto {
 		private String journeyThumbnailUrl;
 		private List<String> journeyThemes;
 		private String region;
+		private String profileImageUrl;
 
 
 		public static JourneyDto.MyListResponse fromEntity(Journey journey) {
@@ -359,6 +370,7 @@ public class JourneyDto {
 				.introductionText(journey.getIntroductionText())
 				.region(journey.getRegion().getRegionName())
 				.journeyThumbnailUrl(journey.getJourneyThumbnailUrl())
+				.profileImageUrl(journey.getMember().getProfileImageUrl())
 				.build();
 		}
 	}

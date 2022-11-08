@@ -25,7 +25,8 @@ public class JourneyBookmarkDto {
 
 		private Long journeyId;
 		private Long journeyBookmarkId;
-		private String memberId;
+		private String memberNickName;
+		private String memberProfileImageUrl;
 		private String title;
 		private LocalDate startDate;
 		private LocalDate endDate;
@@ -42,7 +43,8 @@ public class JourneyBookmarkDto {
 			return JourneyBookmarkPageResponse.builder()
 				.journeyId(journey.getId())
 				.journeyBookmarkId(journeyBookmark.getId())
-				.memberId(member.getId())
+				.memberNickName(member.getNickName())
+				.memberProfileImageUrl(member.getProfileImageUrl())
 				.title(journey.getTitle())
 				.startDate(journey.getStartDate())
 				.endDate(journey.getEndDate())

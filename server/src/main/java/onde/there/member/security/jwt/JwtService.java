@@ -37,22 +37,11 @@ public class JwtService {
         // Access Token 생성
         Date accessTokenExpiresIn = new Date(now + ACCESS_TOKEN_EXPIRE_TIME);
 
-        String accessToken = "";
-
-        if (authentication instanceof OAuth2AuthenticationToken) {
-            OAuth2AuthenticationToken oAuth2Authentication = (OAuth2AuthenticationToken) authentication;
-            accessToken = Jwts.builder()
-                    .setSubject(oAuth2Authentication.getPrincipal().getAttribute("email"))
-                    .setExpiration(accessTokenExpiresIn)
-                    .signWith(SignatureAlgorithm.HS256, secretKey)
-                    .compact();
-        } else if (authentication instanceof UsernamePasswordAuthenticationToken) {
-            accessToken = Jwts.builder()
+        String accessToken = Jwts.builder()
                     .setSubject(authentication.getName())
                     .setExpiration(accessTokenExpiresIn)
                     .signWith(SignatureAlgorithm.HS256, secretKey)
                     .compact();
-        }
 
         // Refresh Token 생성
         String refreshToken = Jwts.builder()
@@ -67,6 +56,32 @@ public class JwtService {
                 .refreshTokenExpirationTime(REFRESH_TOKEN_EXPIRE_TIME)
                 .build();
     }
+
+    public MemberDto.SigninResponse generateToken(Member member) {
+        long now = (new Date()).getTime();
+        // Access Token 생성
+        Date accessTokenExpiresIn = new Date(now + ACCESS_TOKEN_EXPIRE_TIME);
+
+        String accessToken = Jwts.builder()
+                .setSubject(member.getId())
+                .setExpiration(accessTokenExpiresIn)
+                .signWith(SignatureAlgorithm.HS256, secretKey)
+                .compact();
+
+        // Refresh Token 생성
+        String refreshToken = Jwts.builder()
+                .setExpiration(new Date(now + REFRESH_TOKEN_EXPIRE_TIME))
+                .signWith(SignatureAlgorithm.HS256, secretKey)
+                .compact();
+
+        return MemberDto.SigninResponse.builder()
+                .grantType(BEARER_TYPE)
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .refreshTokenExpirationTime(REFRESH_TOKEN_EXPIRE_TIME)
+                .build();
+    }
+
 
     public Authentication getAuthentication(String accessToken) {
         Claims claims = parseClaims(accessToken);

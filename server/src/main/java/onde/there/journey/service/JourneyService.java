@@ -23,6 +23,7 @@ import onde.there.dto.journy.JourneyDto.DetailResponse;
 import onde.there.dto.journy.JourneyDto.FilteringResponse;
 import onde.there.dto.journy.JourneyDto.JourneyListResponse;
 import onde.there.dto.journy.JourneyDto.MyListResponse;
+import onde.there.dto.journy.JourneyDto.NickNameListResponse;
 import onde.there.dto.journy.JourneyDto.UpdateRequest;
 import onde.there.dto.journy.JourneyDto.UpdateResponse;
 import onde.there.image.service.AwsS3Service;
@@ -30,8 +31,6 @@ import onde.there.journey.exception.JourneyException;
 import onde.there.journey.repository.JourneyRepository;
 import onde.there.journey.repository.JourneyThemeRepository;
 import onde.there.member.repository.MemberRepository;
-import onde.there.place.exception.PlaceErrorCode;
-import onde.there.place.exception.PlaceException;
 import onde.there.place.repository.PlaceRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -125,12 +124,30 @@ public class JourneyService {
 		Member member = memberRepository.findById(memberId)
 			.orElseThrow(() -> new JourneyException(NOT_FOUND_MEMBER));
 
-		Page<Journey> journeys = journeyRepository.myList(memberId, pageable);
+		Page<Journey> journeys = journeyRepository.journeyListByMemberId(memberId, pageable);
 
 		log.info("myList() : 조회 완료");
 
 		return journeys.map(
 			MyListResponse::fromEntity
+		);
+	}
+
+	@Transactional
+	public Page<JourneyDto.NickNameListResponse> nickNameList(
+		String nickname, Pageable pageable) {
+
+		log.info("myList() : 호출");
+
+		Member member = memberRepository.findByNickName(nickname)
+			.orElseThrow(() -> new JourneyException(NOT_FOUND_MEMBER));
+
+		Page<Journey> journeys = journeyRepository.journeyListByMemberId(member.getId(), pageable);
+
+		log.info("myList() : 조회 완료");
+
+		return journeys.map(
+			NickNameListResponse::fromEntity
 		);
 	}
 
@@ -142,6 +159,9 @@ public class JourneyService {
 
 		Page<Journey> journeys = journeyRepository.searchAll(filteringRequest,
 			pageable);
+
+		List<Journey> content = journeys.getContent();
+		log.info(content.size() + "사이즈");
 
 		log.info("filteredList() : 종료");
 

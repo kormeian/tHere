@@ -8,5 +8,5 @@ import org.springframework.data.domain.Pageable;
 public interface JourneyRepositoryCustom {
 
 	Page<Journey> searchAll(JourneyDto.FilteringRequest filteringRequest, Pageable pageable);
-	Page<Journey> myList(String memberId, Pageable pageable);
+	Page<Journey> journeyListByMemberId(String memberId, Pageable pageable);
 }

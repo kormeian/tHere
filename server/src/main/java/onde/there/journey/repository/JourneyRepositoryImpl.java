@@ -65,7 +65,7 @@ public class JourneyRepositoryImpl implements JourneyRepositoryCustom {
 	}
 
 	@Override
-	public Page<Journey> myList(String memberId, Pageable pageable) {
+	public Page<Journey> journeyListByMemberId(String memberId, Pageable pageable) {
 
 		List<Journey> content = jpaQueryFactory
 			.selectFrom(journey)

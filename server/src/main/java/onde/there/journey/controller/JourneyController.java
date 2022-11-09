@@ -14,6 +14,7 @@ import onde.there.dto.journy.JourneyDto.FilteringRequest;
 import onde.there.dto.journy.JourneyDto.FilteringResponse;
 import onde.there.dto.journy.JourneyDto.JourneyListResponse;
 import onde.there.dto.journy.JourneyDto.MyListResponse;
+import onde.there.dto.journy.JourneyDto.NickNameListResponse;
 import onde.there.journey.service.JourneyService;
 import onde.there.member.security.jwt.TokenMemberId;
 import org.springframework.data.domain.Page;
@@ -108,7 +109,7 @@ public class JourneyController {
 
 	@Operation(summary = "내 여정 조회", description = "내 여정을 조회합니다.")
 	@ApiResponse(responseCode = "200", description = "내 여정을 반환",
-		content = @Content(schema = @Schema(implementation = JourneyDto.JourneyListResponse.class)))
+		content = @Content(schema = @Schema(implementation = JourneyDto.MyListResponse.class)))
 	@GetMapping("/my-list")
 	public ResponseEntity<Page<MyListResponse>> getMyJourneyList(
 		@Parameter(description = "내 아이디", required = true)
@@ -117,7 +118,20 @@ public class JourneyController {
 		return ResponseEntity.ok(journeyService.myList(memberId, pageable));
 	}
 
+	@Operation(summary = "nickName 여정 조회", description = "nickName 여정을 조회합니다.")
+	@ApiResponse(responseCode = "200", description = "nickName 여정을 반환",
+		content = @Content(schema = @Schema(implementation = JourneyDto.NickNameListResponse.class)))
+	@GetMapping("/nickName-list")
+	public ResponseEntity<Page<NickNameListResponse>> getNickNameJourneyList(
+		@Parameter(description = "닉네임", required = true)
+		String nickName, Pageable pageable) {
+
+		return ResponseEntity.ok(journeyService.nickNameList(nickName, pageable));
+	}
+
 	@Operation(summary = "여정 필터링", description = "필터링된 여정을 조회합니다.")
+	@ApiResponse(responseCode = "200", description = "필터링된 여정을 반환",
+		content = @Content(schema = @Schema(implementation = JourneyDto.FilteringResponse.class)))
 	@GetMapping("/filtered-list")
 	public ResponseEntity<Page<FilteringResponse>> getFilteredList(
 		@RequestParam String keyword,

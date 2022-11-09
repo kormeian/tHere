@@ -375,4 +375,45 @@ public class JourneyDto {
 		}
 	}
 
+	@Setter
+	@Getter
+	@AllArgsConstructor
+	@NoArgsConstructor
+	@Builder
+	public static class NickNameListResponse {
+
+		private Long journeyId;
+		private String nickName;
+		private String title;
+		private LocalDate startDate;
+		private LocalDate endDate;
+		private int numberOfPeople;
+		private String disclosure;
+		private String introductionText;
+		private String journeyThumbnailUrl;
+		private List<String> journeyThemes;
+		private String region;
+		private String profileImageUrl;
+
+
+		public static JourneyDto.NickNameListResponse fromEntity(Journey journey) {
+			return NickNameListResponse.builder()
+				.journeyId(journey.getId())
+				.nickName(journey.getMember().getNickName())
+				.title(journey.getTitle())
+				.startDate(journey.getStartDate())
+				.endDate(journey.getEndDate())
+				.numberOfPeople(journey.getNumberOfPeople())
+				.disclosure(journey.getDisclosure())
+				.journeyThemes(journey.getJourneyThemes().stream()
+					.map(i -> i.getJourneyThemeName().getThemeName()).collect(
+						Collectors.toList()))
+				.introductionText(journey.getIntroductionText())
+				.region(journey.getRegion().getRegionName())
+				.journeyThumbnailUrl(journey.getJourneyThumbnailUrl())
+				.profileImageUrl(journey.getMember().getProfileImageUrl())
+				.build();
+		}
+	}
+
 }

@@ -2,8 +2,6 @@ package onde.there.member.security.jwt;
 
 
 import lombok.extern.slf4j.Slf4j;
-import onde.there.member.exception.MemberException;
-import onde.there.member.exception.type.MemberErrorCode;
 import onde.there.member.type.TokenType;
 import onde.there.member.utils.RedisService;
 import org.springframework.security.core.Authentication;
@@ -33,17 +31,16 @@ public class JwtAuthenticationFilter extends GenericFilterBean {
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
         String token = resolveToken((HttpServletRequest) request);
-
         if (token != null) {
             validateToken(token);
         }
-
         chain.doFilter(request, response);
     }
 
     private void validateToken(String token) {
         jwtService.validateToken(token, TokenType.ACCESS);
         String logout = checkLogoutToken(token);
+        // 토큰이 블랙리스트에 등록이 되어 있으면 인증정보를 만들어주지 않는다.
         if(logout == null) {
             Authentication authentication = jwtService.getAuthentication(token);
             SecurityContextHolder.getContext().setAuthentication(authentication);

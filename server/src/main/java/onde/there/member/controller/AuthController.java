@@ -3,6 +3,7 @@ package onde.there.member.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import onde.there.dto.member.AuthDto;
 import onde.there.dto.member.MemberDto;
 import onde.there.member.exception.MemberException;
 import onde.there.member.exception.type.MemberErrorCode;
@@ -22,14 +23,13 @@ public class AuthController {
 
     @Operation(summary = "로그인", description = "로그인")
     @PostMapping("/signin")
-    public ResponseEntity<?> signin(@Validated @RequestBody MemberDto.SigninRequest signinRequest) {
+    public ResponseEntity<AuthDto.TokenResponse> signin(@Validated @RequestBody MemberDto.SigninRequest signinRequest) {
         log.info("signin request => {}", signinRequest.getId());
-        MemberDto.SigninResponse response = authService.signin(signinRequest);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(authService.signin(signinRequest));
     }
 
     @GetMapping("/auth")
-    public ResponseEntity<?> auth(@TokenMemberId String memberId) {
+    public ResponseEntity<MemberDto.AuthResponse> auth(@TokenMemberId String memberId) {
         if (memberId == null) {
             throw new MemberException(MemberErrorCode.LOGIN_REQUIRED);
         }
@@ -38,16 +38,16 @@ public class AuthController {
     }
 
     @PostMapping("/reissue")
-    public ResponseEntity<?> reissue(@Validated @RequestBody MemberDto.ReissueRequest request) {
+    public ResponseEntity<AuthDto.TokenResponse> reissue(@Validated @RequestBody MemberDto.ReissueRequest request) {
         log.info("reissue request => {}", request);
         return ResponseEntity.ok(authService.reissue(request));
     }
 
     @Operation(summary = "로그아웃", description = "로그아웃")
     @PostMapping("/signout")
-    public ResponseEntity<?> signout(@Validated @RequestBody MemberDto.SignoutRequest signoutRequest) {
+    public ResponseEntity<String> signout(@Validated @RequestBody MemberDto.SignoutRequest signoutRequest) {
         log.info("signout request => {}", signoutRequest);
         authService.signout(signoutRequest);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok().body("로그아웃 되었습니다.");
     }
 }

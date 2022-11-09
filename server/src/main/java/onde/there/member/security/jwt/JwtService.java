@@ -14,7 +14,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.stereotype.Service;
 
 import java.util.Collection;
@@ -34,20 +33,8 @@ public class JwtService {
 
     public MemberDto.SigninResponse generateToken(Authentication authentication) {
         long now = (new Date()).getTime();
-        // Access Token 생성
-        Date accessTokenExpiresIn = new Date(now + ACCESS_TOKEN_EXPIRE_TIME);
-
-        String accessToken = Jwts.builder()
-                    .setSubject(authentication.getName())
-                    .setExpiration(accessTokenExpiresIn)
-                    .signWith(SignatureAlgorithm.HS256, secretKey)
-                    .compact();
-
-        // Refresh Token 생성
-        String refreshToken = Jwts.builder()
-                .setExpiration(new Date(now + REFRESH_TOKEN_EXPIRE_TIME))
-                .signWith(SignatureAlgorithm.HS256, secretKey)
-                .compact();
+        String accessToken = generateAccessToken(authentication.getName(), now);
+        String refreshToken = generateRefreshToken(now);
 
         return MemberDto.SigninResponse.builder()
                 .grantType(BEARER_TYPE)
@@ -59,20 +46,8 @@ public class JwtService {
 
     public MemberDto.SigninResponse generateToken(Member member) {
         long now = (new Date()).getTime();
-        // Access Token 생성
-        Date accessTokenExpiresIn = new Date(now + ACCESS_TOKEN_EXPIRE_TIME);
-
-        String accessToken = Jwts.builder()
-                .setSubject(member.getId())
-                .setExpiration(accessTokenExpiresIn)
-                .signWith(SignatureAlgorithm.HS256, secretKey)
-                .compact();
-
-        // Refresh Token 생성
-        String refreshToken = Jwts.builder()
-                .setExpiration(new Date(now + REFRESH_TOKEN_EXPIRE_TIME))
-                .signWith(SignatureAlgorithm.HS256, secretKey)
-                .compact();
+        String accessToken = generateAccessToken(member.getId(), now);
+        String refreshToken = generateRefreshToken(now);
 
         return MemberDto.SigninResponse.builder()
                 .grantType(BEARER_TYPE)
@@ -80,6 +55,25 @@ public class JwtService {
                 .refreshToken(refreshToken)
                 .refreshTokenExpirationTime(REFRESH_TOKEN_EXPIRE_TIME)
                 .build();
+    }
+
+    private String generateAccessToken(String memberId, long now) {
+        if (memberId == null) {
+            throw new IllegalArgumentException("memberId required not null");
+        }
+
+        return Jwts.builder()
+                .setSubject(memberId)
+                .setExpiration(new Date(now + ACCESS_TOKEN_EXPIRE_TIME))
+                .signWith(SignatureAlgorithm.HS256, secretKey)
+                .compact();
+    }
+
+    private String generateRefreshToken(long now) {
+        return Jwts.builder()
+                .setExpiration(new Date(now + REFRESH_TOKEN_EXPIRE_TIME))
+                .signWith(SignatureAlgorithm.HS256, secretKey)
+                .compact();
     }
 
 

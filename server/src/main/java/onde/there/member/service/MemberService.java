@@ -5,15 +5,10 @@ import lombok.extern.slf4j.Slf4j;
 import onde.there.domain.Member;
 import onde.there.dto.member.MemberDto;
 import onde.there.image.service.AwsS3Service;
-import onde.there.member.exception.type.MemberErrorCode;
 import onde.there.member.exception.MemberException;
-import onde.there.member.security.jwt.JwtService;
-import onde.there.member.type.TokenType;
+import onde.there.member.exception.type.MemberErrorCode;
 import onde.there.member.utils.MailService;
 import onde.there.member.utils.RedisService;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -70,7 +65,6 @@ public class MemberService {
         String uuid = UUID.randomUUID().toString();
         String encodedPassword = passwordEncoder.encode(signupRequest.getPassword());
         Member member = Member.from(signupRequest, encodedPassword);
-
         mailService.sendSignupMail(uuid, member);
         memberRedisService.set(uuid, member, 10, TimeUnit.MINUTES);
         return member;
@@ -110,25 +104,13 @@ public class MemberService {
     }
 
     private String parseUpdatedEncodedPassword(MemberDto.UpdateRequest updateRequest, Member member) {
-        String encodedPassword = null;
-
-        if (updateRequest.getPassword().equals("")) {
-            encodedPassword = member.getPassword();
-        } else {
-            encodedPassword= passwordEncoder.encode(updateRequest.getPassword());
-        }
-        return encodedPassword;
+        return updateRequest.getPassword().equals("") ?
+                member.getPassword() :
+                passwordEncoder.encode(updateRequest.getPassword());
     }
 
     private String parseUpdateProfileUrl(MultipartFile multipartFile, Member member) {
-        String profileUrl = null;
-        if (multipartFile == null || multipartFile.isEmpty()) {
-            profileUrl = member.getProfileImageUrl();
-        } else {
-            profileUrl = awsS3Service.uploadFiles(List.of(multipartFile)).get(0);
-        }
-        return profileUrl;
+        boolean condition = multipartFile == null || multipartFile.isEmpty();
+        return condition ? member.getProfileImageUrl() : awsS3Service.uploadFiles(List.of(multipartFile)).get(0);
     }
-
-
 }

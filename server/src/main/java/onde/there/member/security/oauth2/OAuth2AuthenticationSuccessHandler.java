@@ -2,29 +2,20 @@ package onde.there.member.security.oauth2;
 
 import lombok.RequiredArgsConstructor;
 import onde.there.domain.Member;
-import onde.there.dto.member.MemberDto;
+import onde.there.dto.member.AuthDto;
 import onde.there.member.repository.MemberRepository;
 import onde.there.member.security.jwt.JwtService;
-import onde.there.member.utils.RandomUtil;
 import onde.there.member.utils.RedisService;
 import onde.there.member.utils.UrlUtil;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.util.UriComponentsBuilder;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.Collection;
-import java.util.HashSet;
 import java.util.concurrent.TimeUnit;
 
 @Component
@@ -40,17 +31,17 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
         String email = oAuth2User.getAttribute("email");
         Member findedMember = memberRepository.findByEmail(email).orElse(null);
-
-        String url = null;
-
-        if (findedMember == null) {
-            url = urlUtil.makeNewMemberUrl(oAuth2User);
-        } else {
-            MemberDto.SigninResponse signinResponse = jwtService.generateToken(findedMember);
-            tokenRedisService.set("RT:"+ findedMember.getId(), signinResponse.getRefreshToken(), signinResponse.getRefreshTokenExpirationTime(), TimeUnit.MILLISECONDS);
-            url = urlUtil.makeOldMemberUrl(oAuth2User, signinResponse);
-        }
-
+        String url = findedMember == null ? processNewMember(oAuth2User) : processOldMember(oAuth2User, findedMember);
         getRedirectStrategy().sendRedirect(request, response, url);
+    }
+    
+    private String processNewMember(OAuth2User oAuth2User) {
+        return urlUtil.makeNewMemberUrl(oAuth2User);
+    }
+
+    public String processOldMember(OAuth2User oAuth2User, Member findedMember) {
+        AuthDto.TokenResponse tokenResponse = jwtService.generateToken(findedMember);
+        tokenRedisService.set("RT:"+ findedMember.getId(), tokenResponse.getRefreshToken(), tokenResponse.getRefreshTokenExpirationTime(), TimeUnit.MILLISECONDS);
+        return urlUtil.makeOldMemberUrl(oAuth2User, tokenResponse);
     }
 }

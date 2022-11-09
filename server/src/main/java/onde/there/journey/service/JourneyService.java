@@ -211,7 +211,7 @@ public class JourneyService {
 		List<JourneyTheme> journeyThemeTypeList = journeyThemeRepository
 			.findAllByJourneyId(journey.getId());
 
-		List<Place> list = placeRepository.findAllByJourneyIdOrderByPlaceTimeAsc(journeyId);
+		List<Place> list = placeRepository.findAllByJourneyId(journeyId);
 
 		if (list.size() == 0) {
 			throw new PlaceException(PlaceErrorCode.DELETED_NOTING);

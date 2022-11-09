@@ -12,6 +12,7 @@ public interface PlaceRepository extends JpaRepository<Place, Long> {
 	boolean existsById(Long placeId);
 	List<Place> findAllByJourneyIdOrderByPlaceTimeAsc(Long journeyId);
 
+	List<Place> findAllByJourneyId(Long journeyId);
 	Integer deleteAllByJourneyId(Long journeyId);
 
 	Long countAllByJourneyId(Long journeyId);

@@ -44,8 +44,7 @@ public class PlaceController {
 		@RequestPart @Valid PlaceDto.CreateRequest request,
 		@Parameter(hidden = true)
 		@TokenMemberId String memberId) {
-		return ResponseEntity.ok(
-			Response.toResponse(placeService.createPlace(multipartFile, request, memberId)));
+		return ResponseEntity.ok(placeService.createPlace(multipartFile, request, memberId));
 	}
 
 	@Operation(summary = "장소 조회", description = "placeId에 해당하는 장소 조회")

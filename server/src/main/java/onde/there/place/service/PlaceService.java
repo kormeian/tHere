@@ -13,6 +13,7 @@ import onde.there.domain.PlaceHeart;
 import onde.there.domain.PlaceImage;
 import onde.there.domain.type.PlaceCategoryType;
 import onde.there.dto.place.PlaceDto;
+import onde.there.dto.place.PlaceDto.CreateRequest;
 import onde.there.dto.place.PlaceDto.Response;
 import onde.there.dto.place.PlaceDto.UpdateRequest;
 import onde.there.image.service.AwsS3Service;
@@ -43,15 +44,12 @@ public class PlaceService {
 	private final AwsS3Service awsS3Service;
 
 	@Transactional
-	public Place createPlace(List<MultipartFile> images, PlaceDto.CreateRequest request,
+	public Response createPlace(List<MultipartFile> images, PlaceDto.CreateRequest request,
 		String memberId) {
 		log.info("createPlace : 장소 생성 시작!");
-		Journey journey = journeyRepository.findById(request.getJourneyId())
-			.orElseThrow(() -> new PlaceException(PlaceErrorCode.NOT_FOUND_JOURNEY));
+		Journey journey = checkJourney(request.getJourneyId());
 
-		if (!journey.getMember().getId().equals(memberId)) {
-			throw new PlaceException(PlaceErrorCode.MISMATCH_MEMBER_ID);
-		}
+		checkAuthorization(memberId, journey);
 
 		if (placeRepository.countAllByJourneyId(request.getJourneyId()) >= 10) {
 			throw new PlaceException(PlaceErrorCode.MAX_PLACE_NUM);
@@ -63,16 +61,18 @@ public class PlaceService {
 
 		List<String> imageUrls = imageUploadToS3(images);
 		savePlaceImage(savePlace, imageUrls);
-		log.info("createPlace : 장소 저장 완료! (장소 아이디 : " + savePlace.getId() + ")");
 
-		return savePlace;
+		Response response = Response.toResponse(savePlace);
+		response.setImageUrls(imageUrls);
+
+		log.info("createPlace : 장소 저장 완료! (장소 아이디 : " + savePlace.getId() + ")");
+		return response;
 	}
 
-	public PlaceDto.Response getPlace(Long placeId) {
+	public Response getPlace(Long placeId) {
 		log.info("getPlace : 장소 조회 시작! (장소 아이디 : " + placeId + ")");
-		Place place = placeRepository.findById(placeId)
-			.orElseThrow(() -> new PlaceException(PlaceErrorCode.NOT_FOUND_PLACE));
-		Hibernate.initialize(place.getPlaceImages());
+
+		Place place = checkPlace(placeId);
 		Response response = Response.toResponse(place);
 
 		log.info("getPlace : 장소 조회 완료! (장소 아이디 : " + placeId + ")");
@@ -81,8 +81,7 @@ public class PlaceService {
 
 	public List<Response> list(Long journeyId, String memberId) {
 		log.info("list : 여정에 포함된 장소 조회 시작! (여정 아이디 : " + journeyId + ")");
-		journeyRepository.findById(journeyId)
-			.orElseThrow(() -> new PlaceException(PlaceErrorCode.NOT_FOUND_JOURNEY));
+		checkJourney(journeyId);
 
 		if (memberId == null) {
 			List<Place> places = placeRepository.findAllByJourneyIdOrderByPlaceTimeAsc(journeyId);
@@ -111,12 +110,9 @@ public class PlaceService {
 	@Transactional
 	public boolean delete(Long placeId, String memberId) {
 		log.info("delete : 장소 삭제 시작! (장소 아이디 : " + placeId + ")");
-		Place place = placeRepository.findById(placeId)
-			.orElseThrow(() -> new PlaceException(PlaceErrorCode.NOT_FOUND_PLACE));
+		Place place = checkPlace(placeId);
 
-		if (!place.getJourney().getMember().getId().equals(memberId)) {
-			throw new PlaceException(PlaceErrorCode.MISMATCH_MEMBER_ID);
-		}
+		checkAuthorization(memberId, place.getJourney());
 
 		deleteAllWithPlaceRelations(placeId);
 
@@ -128,21 +124,18 @@ public class PlaceService {
 	@Transactional
 	public boolean deleteAll(Long journeyId, String memberId) {
 		log.info("deleteAll : 여정에 포함된 장소 삭제 시작! (여정 아이디 : " + journeyId + ")");
-		Journey journey = journeyRepository.findById(journeyId)
-			.orElseThrow(() -> new PlaceException(PlaceErrorCode.NOT_FOUND_JOURNEY));
+		Journey journey = checkJourney(journeyId);
 
-		if (!journey.getMember().getId().equals(memberId)) {
-			throw new PlaceException(PlaceErrorCode.MISMATCH_MEMBER_ID);
-		}
+		checkAuthorization(memberId, journey);
 
-		List<Place> places = placeRepository.findAllByJourneyIdOrderByPlaceTimeAsc(journeyId);
+		List<Place> places = placeRepository.findAllByJourneyId(journeyId);
 
 		if (places.size() == 0) {
 			throw new PlaceException(PlaceErrorCode.DELETED_NOTING);
 		}
 
 		for (Place place : places) {
-			deletePlaceImagesInPlace(place.getId());
+			deleteAllWithPlaceRelations(place.getId());
 		}
 
 		placeRepository.deleteAll(places);
@@ -154,15 +147,12 @@ public class PlaceService {
 	public PlaceDto.Response updatePlace(List<MultipartFile> multipartFile, UpdateRequest request,
 		String memberId) {
 		log.info("updatePlace : 장소 업데이트 시작! (장소 아이디 : " + request.getPlaceId() + ")");
-		Place savedPlace = placeRepository.findById(request.getPlaceId())
-			.orElseThrow(() -> new PlaceException(PlaceErrorCode.NOT_FOUND_PLACE));
+		Place savedPlace = checkPlace(request.getPlaceId());
 
-		if (!savedPlace.getJourney().getMember().getId().equals(memberId)) {
-			throw new PlaceException(PlaceErrorCode.MISMATCH_MEMBER_ID);
-		}
+		checkAuthorization(memberId, savedPlace.getJourney());
 
 		log.info("장소에 이미지 제외한 값 업데이트 시작! (장소 아이디 : " + request.getPlaceId() + ")");
-		Place updatePlace = setUpdateRequest(savedPlace, request);
+		Place updatePlace = request.toEntity();
 		placeRepository.save(updatePlace);
 		log.info("장소에 이미지 제외한 값 업데이트 완료! (장소 아이디 : " + request.getPlaceId() + ")");
 
@@ -222,20 +212,19 @@ public class PlaceService {
 		savePlace.setPlaceImages(placeImages);
 	}
 
-	private Place setUpdateRequest(Place savePlace, PlaceDto.UpdateRequest updateRequest) {
-		savePlace.setLatitude(updateRequest.getLatitude());
-		savePlace.setLongitude(updateRequest.getLongitude());
-		savePlace.setTitle(updateRequest.getTitle());
-		savePlace.setText(updateRequest.getText());
-		savePlace.setAddressName(updateRequest.getAddressName());
-		savePlace.setRegion1(updateRequest.getRegion1());
-		savePlace.setRegion2(updateRequest.getRegion2());
-		savePlace.setRegion3(updateRequest.getRegion3());
-		savePlace.setRegion4(updateRequest.getRegion4());
-		savePlace.setPlaceName(updateRequest.getPlaceName());
-		savePlace.setPlaceTime(updateRequest.getPlaceTime());
-		savePlace.setPlaceCategory(
-			PlaceCategoryType.toPlaceCategoryType(updateRequest.getPlaceCategory()));
-		return savePlace;
+	private Journey checkJourney(Long journeyId) {
+		return journeyRepository.findById(journeyId)
+			.orElseThrow(() -> new PlaceException(PlaceErrorCode.NOT_FOUND_JOURNEY));
+	}
+
+	private Place checkPlace(Long placeId) {
+		return placeRepository.findById(placeId)
+			.orElseThrow(() -> new PlaceException(PlaceErrorCode.NOT_FOUND_PLACE));
+	}
+
+	private static void checkAuthorization(String memberId, Journey journey) {
+		if (!journey.getMember().getId().equals(memberId)) {
+			throw new PlaceException(PlaceErrorCode.MISMATCH_MEMBER_ID);
+		}
 	}
 }

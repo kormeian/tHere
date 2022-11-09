@@ -92,10 +92,11 @@ public class AuthService {
         jwtService.validateToken(signinRequest.getAccessToken(), TokenType.ACCESS);
         jwtService.validateToken(signinRequest.getAccessToken(), TokenType.REFRESH);
         Authentication authentication = jwtService.getAuthentication(signinRequest.getAccessToken());
-        deleteRefreshToken(authentication);
+
         // 엑세스 토큰 로그아웃 등록
         Long expiration = jwtService.getExpiration(signinRequest.getAccessToken());
-        tokenRedisService.set(signinRequest.getRefreshToken(), "logout", expiration, TimeUnit.MILLISECONDS);
+        tokenRedisService.set(signinRequest.getAccessToken(), "logout", expiration, TimeUnit.MILLISECONDS);
+        deleteRefreshToken(authentication);
     }
 
     private void setRefreshToken(Authentication authentication, String refreshToken,long expirationTime) {

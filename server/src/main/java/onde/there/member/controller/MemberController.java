@@ -66,27 +66,24 @@ public class MemberController {
         return ResponseEntity.ok(member.getId() + "님의 회원가입이 완료 되었습니다! 로그인 후 서비스를 사용하실 수 있습니다.");
     }
 
-    @PatchMapping(consumes = {MediaType.MULTIPART_FORM_DATA_VALUE, MediaType.APPLICATION_JSON_VALUE})
-    public ResponseEntity<MemberDto.AuthResponse> update(@Validated @RequestPart(required = false) MultipartFile multipartFile,
+    @Operation(summary = "회원 정보 수정정")
+   @PatchMapping(consumes = {MediaType.MULTIPART_FORM_DATA_VALUE, MediaType.APPLICATION_JSON_VALUE})
+    public ResponseEntity<MemberDto.AuthResponse> update(
+                                    @Validated @RequestPart(required = false) MultipartFile multipartFile,
                                     @Validated @RequestPart MemberDto.UpdateRequest updateRequest,
                                     @TokenMemberId String memberId) {
+
+        log.info("member update request => {}", updateRequest);
+
         if (memberId == null) {
             throw new MemberException(MemberErrorCode.LOGIN_REQUIRED);
         }
-
-        log.info("member update request => {}", updateRequest);
 
         if (!updateRequest.getId().equals(memberId)) {
             throw new MemberException(MemberErrorCode.AUTHORITY_ERROR);
         }
 
-        String password = updateRequest.getPassword().trim();
-        Matcher matcher = Pattern.compile("^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*])[0-9a-zA-Z!@#$%^&*]{10,20}$")
-                .matcher(password);
-
-        if (!password.equals("") && !matcher.matches()){
-            throw new MemberException(MemberErrorCode.BAD_REQUEST);
-        }
+        validatePassword(updateRequest);
 
         Member member = memberService.update(multipartFile, updateRequest);
 
@@ -96,5 +93,15 @@ public class MemberController {
                         .email(member.getEmail())
                         .profileImageUrl(member.getProfileImageUrl())
                         .build());
+    }
+
+    private void validatePassword(MemberDto.UpdateRequest updateRequest) {
+        String password = updateRequest.getPassword().trim();
+        Matcher matcher = Pattern.compile("^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*])[0-9a-zA-Z!@#$%^&*]{10,20}$")
+                .matcher(password);
+
+        if (!password.equals("") && !matcher.matches()){
+            throw new MemberException(MemberErrorCode.BAD_REQUEST);
+        }
     }
 }

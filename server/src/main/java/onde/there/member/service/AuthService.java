@@ -3,6 +3,7 @@ package onde.there.member.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import onde.there.domain.Member;
+import onde.there.dto.member.AuthDto;
 import onde.there.dto.member.MemberDto;
 import onde.there.member.exception.MemberException;
 import onde.there.member.exception.type.MemberErrorCode;
@@ -27,7 +28,7 @@ public class AuthService {
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
     private final JwtService jwtService;
 
-    public MemberDto.SigninResponse signin(MemberDto.SigninRequest signinRequest) {
+    public AuthDto.TokenResponse signin(MemberDto.SigninRequest signinRequest) {
         memberRepository.findById(signinRequest.getId())
                 .orElseThrow(() -> {
                     MemberException memberException = new MemberException(MemberErrorCode.MEMBER_NOT_FOUND);
@@ -39,10 +40,10 @@ public class AuthService {
 
         UsernamePasswordAuthenticationToken authenticationToken = signinRequest.toAuthentication();
         Authentication authentication = authenticationManagerBuilder.getObject().authenticate(authenticationToken);
-        MemberDto.SigninResponse signinResponse = jwtService.generateToken(authentication);
-        setRefreshToken(authentication, signinResponse.getRefreshToken(), signinResponse.getRefreshTokenExpirationTime());
+        AuthDto.TokenResponse tokenResponse = jwtService.generateToken(authentication);
+        setRefreshToken(authentication, tokenResponse.getRefreshToken(), tokenResponse.getRefreshTokenExpirationTime());
 
-        return signinResponse;
+        return tokenResponse;
     }
 
     public MemberDto.AuthResponse auth(String memberId) {
@@ -64,7 +65,7 @@ public class AuthService {
                 .build();
     }
 
-    public MemberDto.SigninResponse reissue(MemberDto.ReissueRequest request) {
+    public AuthDto.TokenResponse reissue(MemberDto.ReissueRequest request) {
         jwtService.validateToken(request.getRefreshToken(), TokenType.REFRESH);
         Authentication authentication = jwtService.getAuthentication(request.getAccessToken());
 
@@ -81,30 +82,31 @@ public class AuthService {
             throw new MemberException(MemberErrorCode.INVALID_REFRESH_TOKEN);
         }
 
-        MemberDto.SigninResponse signinResponse = jwtService.generateToken(authentication);
-        setRefreshToken(authentication, signinResponse.getRefreshToken(), signinResponse.getRefreshTokenExpirationTime());
+        AuthDto.TokenResponse tokenResponse = jwtService.generateToken(authentication);
+        setRefreshToken(authentication, tokenResponse.getRefreshToken(), tokenResponse.getRefreshTokenExpirationTime());
 
-        return signinResponse;
-    }
-
-    private void setRefreshToken(Authentication authentication, String refreshToken,long expirationTime) {
-        tokenRedisService.set("RT:"+ authentication.getName(), refreshToken, expirationTime, TimeUnit.MILLISECONDS);
-    }
-
-    private void deleteRefreshToken(Authentication authentication, String refreshToken) {
-        String refreshTokenKey = "RT:" + authentication.getName();
-        if(tokenRedisService.get(refreshTokenKey).isPresent()) {
-            tokenRedisService.delete(refreshTokenKey);
-        }
+        return tokenResponse;
     }
 
     public void signout(MemberDto.SignoutRequest signinRequest) {
         jwtService.validateToken(signinRequest.getAccessToken(), TokenType.ACCESS);
         jwtService.validateToken(signinRequest.getAccessToken(), TokenType.REFRESH);
         Authentication authentication = jwtService.getAuthentication(signinRequest.getAccessToken());
-        deleteRefreshToken(authentication, signinRequest.getRefreshToken());
+
         // 엑세스 토큰 로그아웃 등록
         Long expiration = jwtService.getExpiration(signinRequest.getAccessToken());
-        tokenRedisService.set(signinRequest.getRefreshToken(), "logout", expiration, TimeUnit.MILLISECONDS);
+        tokenRedisService.set(signinRequest.getAccessToken(), "logout", expiration, TimeUnit.MILLISECONDS);
+        deleteRefreshToken(authentication);
+    }
+
+    private void setRefreshToken(Authentication authentication, String refreshToken,long expirationTime) {
+        tokenRedisService.set("RT:"+ authentication.getName(), refreshToken, expirationTime, TimeUnit.MILLISECONDS);
+    }
+
+    private void deleteRefreshToken(Authentication authentication) {
+        String refreshTokenKey = "RT:" + authentication.getName();
+        if(tokenRedisService.get(refreshTokenKey).isPresent()) {
+            tokenRedisService.delete(refreshTokenKey);
+        }
     }
 }

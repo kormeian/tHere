@@ -1,4 +1,4 @@
-package onde.there.place.service;
+package onde.there.place.service.mock;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -10,6 +10,7 @@ import java.util.Optional;
 import onde.there.domain.Place;
 import onde.there.place.repository.PlaceHeartRepository;
 import onde.there.place.repository.PlaceRepository;
+import onde.there.place.service.PlaceHeartSchedulingService;
 import onde.there.place.utils.RedisServiceForPlaceHeart;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

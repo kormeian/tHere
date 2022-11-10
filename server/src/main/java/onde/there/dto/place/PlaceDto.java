@@ -1,7 +1,5 @@
 package onde.there.dto.place;
 
-import static onde.there.dto.place.PlaceDto.UpdateRequest.getPlace;
-
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -17,6 +15,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import onde.there.domain.Journey;
 import onde.there.domain.Place;
 import onde.there.domain.PlaceImage;
 import onde.there.domain.type.PlaceCategoryType;
@@ -63,9 +62,20 @@ public class PlaceDto {
 		private String placeName;
 
 		public Place toEntity() {
-			return getPlace(this.latitude, this.longitude, this.title, this.text, this.addressName,
-				this.region1, this.region2, this.region3, this.region4, this.placeTime,
-				this.placeCategory, this.placeName);
+			return Place.builder()
+				.latitude(this.latitude)
+				.longitude(this.longitude)
+				.title(this.title)
+				.text(this.text)
+				.addressName(this.addressName)
+				.region1(this.region1)
+				.region2(this.region2)
+				.region3(this.region3)
+				.region4(this.region4)
+				.placeTime(this.placeTime)
+				.placeCategory(PlaceCategoryType.toPlaceCategoryType(this.placeCategory))
+				.placeName(this.placeName)
+				.build();
 		}
 	}
 
@@ -106,29 +116,23 @@ public class PlaceDto {
 		@NotBlank(message = "placeName 값을 입력 해 주세요!")
 		private String placeName;
 
-		public Place toEntity() {
-			return getPlace(this.latitude, this.longitude, this.title, this.text, this.addressName,
-				this.region1,
-				this.region2, this.region3, this.region4, this.placeTime, this.placeCategory,
-				this.placeName);
-		}
-
-		static Place getPlace(Double latitude, Double longitude, String title, String text,
-			String addressName, String region1, String region2, String region3, String region4,
-			LocalDateTime placeTime, String placeCategory, String placeName) {
+		public Place toEntity(Journey journey) {
 			return Place.builder()
-				.latitude(latitude)
-				.longitude(longitude)
-				.title(title)
-				.text(text)
-				.addressName(addressName)
-				.region1(region1)
-				.region2(region2)
-				.region3(region3)
-				.region4(region4)
-				.placeTime(placeTime)
-				.placeCategory(PlaceCategoryType.toPlaceCategoryType(placeCategory))
-				.placeName(placeName)
+				.id(this.getPlaceId())
+				.latitude(this.latitude)
+				.longitude(this.longitude)
+				.title(this.title)
+				.text(this.text)
+				.addressName(this.addressName)
+				.region1(this.region1)
+				.region2(this.region2)
+				.region3(this.region3)
+				.region4(this.region4)
+				.placeTime(this.placeTime)
+				.placeCategory(PlaceCategoryType.toPlaceCategoryType(this.placeCategory))
+				.placeName(this.placeName)
+				.placeImages(new ArrayList<>())
+				.journey(journey)
 				.build();
 		}
 	}

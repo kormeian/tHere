@@ -1,19 +1,14 @@
 package onde.there.place.service;
 
-import com.querydsl.core.Tuple;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import onde.there.comment.repository.CommentRepository;
-import onde.there.domain.Comment;
 import onde.there.domain.Journey;
 import onde.there.domain.Place;
-import onde.there.domain.PlaceHeart;
 import onde.there.domain.PlaceImage;
-import onde.there.domain.type.PlaceCategoryType;
 import onde.there.dto.place.PlaceDto;
-import onde.there.dto.place.PlaceDto.CreateRequest;
 import onde.there.dto.place.PlaceDto.Response;
 import onde.there.dto.place.PlaceDto.UpdateRequest;
 import onde.there.image.service.AwsS3Service;
@@ -24,7 +19,6 @@ import onde.there.place.repository.PlaceHeartRepository;
 import onde.there.place.repository.PlaceImageRepository;
 import onde.there.place.repository.PlaceRepository;
 import onde.there.place.repository.PlaceRepositoryCustomImpl;
-import org.hibernate.Hibernate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -57,11 +51,11 @@ public class PlaceService {
 
 		Place place = request.toEntity();
 		place.setJourney(journey);
-		Place savePlace = placeRepository.save(place);
 
 		List<String> imageUrls = imageUploadToS3(images);
-		savePlaceImage(savePlace, imageUrls);
+		savePlaceImage(place, imageUrls);
 
+		Place savePlace = placeRepository.save(place);
 		Response response = Response.toResponse(savePlace);
 		response.setImageUrls(imageUrls);
 
@@ -79,7 +73,7 @@ public class PlaceService {
 		return response;
 	}
 
-	public List<Response> list(Long journeyId, String memberId) {
+	public List<Response> placeListOfJourney(Long journeyId, String memberId) {
 		log.info("list : 여정에 포함된 장소 조회 시작! (여정 아이디 : " + journeyId + ")");
 		checkJourney(journeyId);
 
@@ -88,27 +82,15 @@ public class PlaceService {
 			return Response.toResponse(places);
 		}
 
-		List<Tuple> tuples = placeRepositoryCustom.findAllByJourneyOrderByPlaceTimeAsc(
+		List<Response> responses = placeRepositoryCustom.findAllByJourneyOrderByPlaceTimeAsc(
 			journeyId, memberId);
-
-		List<Response> responses = new ArrayList<>();
-		for (Tuple tuple : tuples) {
-			Place place = tuple.get(0, Place.class);
-			boolean heartedCheck = Boolean.TRUE.equals(tuple.get(1, Boolean.class));
-
-			if (place != null) {
-				Response response = Response.toResponse(place);
-				response.setHeartedCheck(heartedCheck);
-				responses.add(response);
-			}
-		}
 
 		log.info("list : 여정에 포함된 장소 조회 완료! (여정 아이디 : " + journeyId + ")");
 		return responses;
 	}
 
 	@Transactional
-	public boolean delete(Long placeId, String memberId) {
+	public boolean deletePlace(Long placeId, String memberId) {
 		log.info("delete : 장소 삭제 시작! (장소 아이디 : " + placeId + ")");
 		Place place = checkPlace(placeId);
 
@@ -152,8 +134,7 @@ public class PlaceService {
 		checkAuthorization(memberId, savedPlace.getJourney());
 
 		log.info("장소에 이미지 제외한 값 업데이트 시작! (장소 아이디 : " + request.getPlaceId() + ")");
-		Place updatePlace = request.toEntity();
-		placeRepository.save(updatePlace);
+		Place updatePlace = request.toEntity(savedPlace.getJourney());
 		log.info("장소에 이미지 제외한 값 업데이트 완료! (장소 아이디 : " + request.getPlaceId() + ")");
 
 		deletePlaceImagesInPlace(request.getPlaceId());
@@ -161,7 +142,7 @@ public class PlaceService {
 		List<String> updateUrls = imageUploadToS3(multipartFile);
 		savePlaceImage(updatePlace, updateUrls);
 
-		Response response = Response.toResponse(savedPlace);
+		Response response = Response.toResponse(updatePlace);
 		response.setImageUrls(updateUrls);
 
 		log.info("updatePlace : 장소 업데이트 완료! (장소 아이디 : " + request.getPlaceId() + ")");
@@ -202,14 +183,14 @@ public class PlaceService {
 		return awsS3Service.uploadFiles(images);
 	}
 
-	private void savePlaceImage(Place savePlace, List<String> imageUrls) {
+	private void savePlaceImage(Place place, List<String> imageUrls) {
 		List<PlaceImage> placeImages = new ArrayList<>();
 		for (String imageUrl : imageUrls) {
 			log.info("savePlaceImage : 장소 이미지 저장 시작! (장소 이미지 URL : " + imageUrl + ")");
-			placeImages.add(placeImageRepository.save(new PlaceImage(savePlace, imageUrl)));
+			placeImages.add(placeImageRepository.save(new PlaceImage(place, imageUrl)));
 			log.info("savePlaceImage : 장소 이미지 저장 완료! (장소 이미지 URL : " + imageUrl + ")");
 		}
-		savePlace.setPlaceImages(placeImages);
+		place.setPlaceImages(placeImages);
 	}
 
 	private Journey checkJourney(Long journeyId) {

@@ -92,10 +92,11 @@ public class JourneyController {
 	@GetMapping("/detail")
 	public ResponseEntity<DetailResponse> getJourneyDetail(
 		@Parameter(description = "조회할 여정 id", required = true)
-		@RequestParam Long journeyId
+		@RequestParam Long journeyId,
+		@TokenMemberId String memeberId
 	) {
 
-		return ResponseEntity.ok(journeyService.journeyDetail(journeyId));
+		return ResponseEntity.ok(journeyService.journeyDetail(journeyId, memeberId));
 	}
 
 	@Operation(summary = "모든 여정 조회", description = "모든 여정을 조회합니다.")
@@ -124,9 +125,9 @@ public class JourneyController {
 	@GetMapping("/nickName-list")
 	public ResponseEntity<Page<NickNameListResponse>> getNickNameJourneyList(
 		@Parameter(description = "닉네임", required = true)
-		String nickName, Pageable pageable) {
+		String nickName, Pageable pageable, @TokenMemberId String memberId) {
 
-		return ResponseEntity.ok(journeyService.nickNameList(nickName, pageable));
+		return ResponseEntity.ok(journeyService.nickNameList(nickName, pageable, memberId));
 	}
 
 	@Operation(summary = "여정 필터링", description = "필터링된 여정을 조회합니다.")
@@ -137,7 +138,8 @@ public class JourneyController {
 		@RequestParam String keyword,
 		@RequestParam List<String> themes,
 		@RequestParam List<String> regions,
-		Pageable pageable
+		Pageable pageable,
+		@TokenMemberId String memberId
 	) {
 
 		FilteringRequest filteringRequest = FilteringRequest.builder()
@@ -147,7 +149,7 @@ public class JourneyController {
 			.build();
 
 		return ResponseEntity.ok(
-			journeyService.filteredList(filteringRequest, pageable));
+			journeyService.filteredList(filteringRequest, pageable, memberId));
 	}
 
 }

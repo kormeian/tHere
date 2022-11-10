@@ -22,6 +22,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import onde.there.domain.type.JourneyThemeType;
 import onde.there.domain.type.RegionType;
+import org.hibernate.annotations.BatchSize;
 
 @Entity(name = "journey")
 @Getter
@@ -66,6 +67,7 @@ public class Journey {
 	private RegionType region;
 
 	@OneToMany(mappedBy = "journey")
+	@BatchSize(size = 10)
 	private List<JourneyTheme> journeyThemes = new ArrayList<>();
 
 }

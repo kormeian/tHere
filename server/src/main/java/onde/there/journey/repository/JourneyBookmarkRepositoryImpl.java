@@ -1,18 +1,15 @@
 package onde.there.journey.repository;
 
-import static onde.there.domain.QJourney.journey;
+import static com.querydsl.jpa.JPAExpressions.select;
 import static onde.there.domain.QJourneyBookmark.journeyBookmark;
-import static onde.there.domain.QMember.member;
-import static onde.there.domain.QJourneyTheme.journeyTheme;
 
-import com.querydsl.core.types.Projections;
+import com.querydsl.core.Tuple;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.JPQLQuery;
 import com.querydsl.jpa.JPQLQueryFactory;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import onde.there.domain.JourneyBookmark;
-import onde.there.dto.journy.JourneyBookmarkDto.JourneyBookmarkPageResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.support.PageableExecutionUtils;
@@ -67,6 +64,19 @@ public class JourneyBookmarkRepositoryImpl implements JourneyBookmarkRepositoryC
 			.where(memberEq(memberId));
 
 		return PageableExecutionUtils.getPage(fetch, pageable, count::fetchCount);
+	}
+
+	@Override
+	public Tuple bookmarkConfirmation(Long journeyId, String memberId) {
+
+		return jpaQueryFactory
+			.select(journeyBookmark.journey.id.countDistinct(), select()
+				.from(journeyBookmark)
+				.where(journeyBookmark.journey.id.eq(journeyId),
+					journeyBookmark.member.id.eq(memberId)).exists())
+			.where(journeyBookmark.journey.id.eq(journeyId))
+			.from(journeyBookmark)
+			.fetchOne();
 	}
 
 	private BooleanExpression memberEq(String memberId) {

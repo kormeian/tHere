@@ -1,11 +1,13 @@
 package onde.there.journey.service;
 
 import static onde.there.domain.type.RegionType.findByRegion;
+import static onde.there.journey.exception.JourneyErrorCode.AVAILABLE_AFTER_LONGIN;
 import static onde.there.journey.exception.JourneyErrorCode.DATE_ERROR;
 import static onde.there.journey.exception.JourneyErrorCode.NOT_FOUND_JOURNEY;
 import static onde.there.journey.exception.JourneyErrorCode.NOT_FOUND_MEMBER;
 import static onde.there.journey.exception.JourneyErrorCode.YOU_ARE_NOT_THE_AUTHOR;
 
+import com.querydsl.core.Tuple;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -20,18 +22,19 @@ import onde.there.domain.Place;
 import onde.there.domain.type.JourneyThemeType;
 import onde.there.dto.journy.JourneyDto;
 import onde.there.dto.journy.JourneyDto.DetailResponse;
+import onde.there.dto.journy.JourneyDto.FilteringRequest;
 import onde.there.dto.journy.JourneyDto.FilteringResponse;
 import onde.there.dto.journy.JourneyDto.JourneyListResponse;
 import onde.there.dto.journy.JourneyDto.MyListResponse;
+import onde.there.dto.journy.JourneyDto.NickNameListResponse;
 import onde.there.dto.journy.JourneyDto.UpdateRequest;
 import onde.there.dto.journy.JourneyDto.UpdateResponse;
 import onde.there.image.service.AwsS3Service;
 import onde.there.journey.exception.JourneyException;
+import onde.there.journey.repository.JourneyBookmarkRepositoryCustom;
 import onde.there.journey.repository.JourneyRepository;
 import onde.there.journey.repository.JourneyThemeRepository;
 import onde.there.member.repository.MemberRepository;
-import onde.there.place.exception.PlaceErrorCode;
-import onde.there.place.exception.PlaceException;
 import onde.there.place.repository.PlaceRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -49,6 +52,7 @@ public class JourneyService {
 	private final MemberRepository memberRepository;
 	private final AwsS3Service awsS3Service;
 	private final PlaceRepository placeRepository;
+	private final JourneyBookmarkRepositoryCustom bookmarkRepositoryCustom;
 
 	@Transactional
 	public JourneyDto.CreateResponse createJourney(
@@ -57,6 +61,7 @@ public class JourneyService {
 
 		log.info("createJourney() : 호출");
 
+		verifyJwt(memberId);
 		Member checkMember = memberRepository.findById(memberId)
 			.orElseThrow(() -> new JourneyException(NOT_FOUND_MEMBER));
 
@@ -122,10 +127,12 @@ public class JourneyService {
 
 		log.info("myList() : 호출");
 
+		verifyJwt(memberId);
 		Member member = memberRepository.findById(memberId)
 			.orElseThrow(() -> new JourneyException(NOT_FOUND_MEMBER));
 
-		Page<Journey> journeys = journeyRepository.myList(memberId, pageable);
+		Page<Journey> journeys = journeyRepository.journeyListByMemberId(
+			memberId, pageable);
 
 		log.info("myList() : 조회 완료");
 
@@ -135,22 +142,76 @@ public class JourneyService {
 	}
 
 	@Transactional
+	public Page<JourneyDto.NickNameListResponse> nickNameList(
+		String nickname, Pageable pageable, String memberId) {
+
+		log.info("myList() : 호출");
+
+		Member member = memberRepository.findByNickName(nickname)
+			.orElseThrow(() -> new JourneyException(NOT_FOUND_MEMBER));
+
+		Page<Journey> journeys = journeyRepository.journeyListByMemberId(
+			member.getId(), pageable);
+
+		List<Journey> journeyList = journeys.getContent();
+
+		Page<NickNameListResponse> nickNameListResponses = journeys.map(
+			NickNameListResponse::fromEntity
+		);
+
+		if (memberId == null) {
+			for (int i = 0; i < nickNameListResponses.getContent().size();
+				i++) {
+				nickNameListResponses.getContent().get(i).setBookmark(false);
+			}
+		} else {
+
+			List<Boolean> isBookmarks = getBookmarks(memberId, journeyList);
+			for (int i = 0; i < nickNameListResponses.getContent().size();
+				i++) {
+				nickNameListResponses.getContent().get(i)
+					.setBookmark(isBookmarks.get(i));
+			}
+		}
+
+		log.info("myList() : 조회 완료");
+
+		return nickNameListResponses;
+	}
+
+	@Transactional
 	public Page<FilteringResponse> filteredList(
-		JourneyDto.FilteringRequest filteringRequest, Pageable pageable) {
+		FilteringRequest filteringRequest, Pageable pageable,
+		String memberId) {
 
 		log.info("filteredList() : 호출");
 
 		Page<Journey> journeys = journeyRepository.searchAll(filteringRequest,
 			pageable);
 
+		List<Journey> journeyList = journeys.getContent();
+		Page<FilteringResponse> filteringResponses = journeys.map(
+			FilteringResponse::fromEntity);
+
+		if (memberId == null) {
+			for (int i = 0; i < filteringResponses.getContent().size(); i++) {
+				filteringResponses.getContent().get(i).setBookmark(false);
+			}
+		} else {
+
+			List<Boolean> isBookmarks = getBookmarks(memberId, journeyList);
+
+			for (int i = 0; i < filteringResponses.getContent().size(); i++) {
+				filteringResponses.getContent().get(i)
+					.setBookmark(isBookmarks.get(i));
+			}
+		}
+
 		log.info("filteredList() : 종료");
 
-		return journeys.map(
-			FilteringResponse::fromEntity
-		);
+		return filteringResponses;
 
 	}
-
 
 	private List<JourneyListResponse> getList(List<JourneyListResponse> list,
 		List<Journey> journeyList) {
@@ -174,7 +235,7 @@ public class JourneyService {
 		return list;
 	}
 
-	public DetailResponse journeyDetail(Long journeyId) {
+	public DetailResponse journeyDetail(Long journeyId, String memberId) {
 
 		log.info("journeyDetail() : 호출");
 
@@ -187,12 +248,26 @@ public class JourneyService {
 				.getJourneyThemeName()
 				.getThemeName())
 			.collect(Collectors.toList());
+
+		DetailResponse detailResponse = DetailResponse
+			.fromEntity(journey, journeyThemeTypeList);
+
 		log.info(
 			"journeyDetail() : journey 조회 완료, journeyId : " + journey.getId());
 
+		if (memberId == null) {
+			detailResponse.setBookmark(false);
+		} else {
+			Tuple tuple = bookmarkRepositoryCustom.bookmarkConfirmation(
+				journey.getId(), memberId);
+			boolean isBookmark = Boolean.TRUE.equals(
+				tuple.get(1, Boolean.class));
+			detailResponse.setBookmark(isBookmark);
+		}
+
 		log.info("journeyDetail() : 종료");
 
-		return DetailResponse.fromEntity(journey, journeyThemeTypeList);
+		return detailResponse;
 	}
 
 	@Transactional
@@ -200,6 +275,7 @@ public class JourneyService {
 
 		log.info("deleteJourney() : 호출");
 
+		verifyJwt(memberId);
 		Journey journey = journeyRepository.findById(journeyId)
 			.orElseThrow(() -> new JourneyException(NOT_FOUND_JOURNEY));
 
@@ -229,6 +305,7 @@ public class JourneyService {
 
 		log.info("updateJourney() : 호출");
 
+		verifyJwt(memberId);
 		Journey journey = journeyRepository.findById(request.getJourneyId())
 			.orElseThrow(() -> new JourneyException(NOT_FOUND_JOURNEY));
 
@@ -236,10 +313,6 @@ public class JourneyService {
 		if (!Objects.equals(Author, memberId)) {
 			throw new JourneyException(YOU_ARE_NOT_THE_AUTHOR);
 		}
-
-		awsS3Service.deleteFile(journey.getJourneyThumbnailUrl());
-		List<String> imageUrls = awsS3Service.uploadFiles(
-			Collections.singletonList(thumbnail));
 
 		List<JourneyTheme> journeyThemes = journeyThemeRepository
 			.findAllByJourneyId(journey.getId());
@@ -256,13 +329,19 @@ public class JourneyService {
 		}
 		log.info("updateJourney() : journeyTheme 수정 완료");
 
+		if (thumbnail != null) {
+			awsS3Service.deleteFile(journey.getJourneyThumbnailUrl());
+			List<String> imageUrls = awsS3Service.uploadFiles(
+				Collections.singletonList(thumbnail));
+			journey.setJourneyThumbnailUrl(imageUrls.get(0));
+		}
+
 		journey.setTitle(request.getTitle());
 		journey.setStartDate(request.getStartDate());
 		journey.setEndDate(request.getEndDate());
 		journey.setNumberOfPeople(request.getNumberOfPeople());
 		journey.setDisclosure(request.getDisclosure());
 		journey.setIntroductionText(request.getIntroductionText());
-		journey.setJourneyThumbnailUrl(imageUrls.get(0));
 		journey.setRegion(findByRegion(request.getRegion()));
 		log.info("updateJourney() : journey 수정 완료, journeyId : "
 			+ journey.getId());
@@ -271,5 +350,24 @@ public class JourneyService {
 
 		return JourneyDto.UpdateResponse
 			.fromEntity(journey, inputJourneyThemes);
+	}
+
+	private List<Boolean> getBookmarks(String memberId,
+		List<Journey> journeyList) {
+		List<Boolean> isBookmarks = new ArrayList<>();
+		for (Journey journey : journeyList) {
+			Tuple tuple = bookmarkRepositoryCustom.bookmarkConfirmation(
+				journey.getId(), memberId);
+			boolean isBookmark = Boolean.TRUE.equals(
+				tuple.get(1, Boolean.class));
+			isBookmarks.add(isBookmark);
+		}
+		return isBookmarks;
+	}
+
+	private void verifyJwt(String memberId) {
+		if (memberId == null) {
+			throw new JourneyException(AVAILABLE_AFTER_LONGIN);
+		}
 	}
 }

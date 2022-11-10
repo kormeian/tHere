@@ -252,6 +252,7 @@ public class JourneyDto {
 		private List<String> journeyThemes;
 		private String region;
 		private String profileImageUrl;
+		private boolean isBookmark;
 
 
 		public static JourneyDto.DetailResponse fromEntity(Journey journey,
@@ -312,6 +313,7 @@ public class JourneyDto {
 		private List<String> journeyThemes;
 		private String region;
 		private String profileImageUrl;
+		private boolean isBookmark;
 
 
 		public static JourneyDto.FilteringResponse fromEntity(Journey journey) {
@@ -394,7 +396,7 @@ public class JourneyDto {
 		private List<String> journeyThemes;
 		private String region;
 		private String profileImageUrl;
-
+		private boolean isBookmark;
 
 		public static JourneyDto.NickNameListResponse fromEntity(Journey journey) {
 			return NickNameListResponse.builder()

@@ -53,13 +53,6 @@ public class JourneyBookmarkController {
 
 	@GetMapping
 	@Operation(summary = "해당 멤버의 북마크(찜) 가져오기", description = "북마크(찜) 가져오기")
-	@ApiResponses(
-		value = {@ApiResponse(
-			content = {@Content(
-				mediaType = "application/json",
-				array = @ArraySchema(schema = @Schema(implementation = JourneyBookmarkPageResponse.class)))
-			})
-		})
 	public ResponseEntity<Page<JourneyBookmarkPageResponse>> getBookmarkList(
 		@Parameter(description = "헤더의 멤버 토큰", hidden = true)
 		@TokenMemberId String memberId,

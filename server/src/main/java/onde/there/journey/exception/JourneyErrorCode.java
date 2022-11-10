@@ -14,7 +14,8 @@ public enum JourneyErrorCode {
 	NO_REGION_MATCHES("일치하는 지역이 없습니다."),
 	NOT_FOUND_BOOKMARK("일치하는 북마크가 없습니다."),
 	YOU_ARE_NOT_THE_AUTHOR("작성자가 아닙니다"),
-	ALREADY_ADDED_BOOKMARK("이미 추가한 북마크입니다.")
+	ALREADY_ADDED_BOOKMARK("이미 추가한 북마크입니다."),
+	AVAILABLE_AFTER_LONGIN("로그인 이후 이용이 가능합니다.")
 	;
 
 

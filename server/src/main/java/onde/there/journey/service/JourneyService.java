@@ -160,18 +160,19 @@ public class JourneyService {
 		);
 
 		if (memberId == null) {
-			for (int i = 0; i < nickNameListResponses.getContent().size(); i++) {
+			for (int i = 0; i < nickNameListResponses.getContent().size();
+				i++) {
 				nickNameListResponses.getContent().get(i).setBookmark(false);
 			}
 		} else {
 
 			List<Boolean> isBookmarks = getBookmarks(memberId, journeyList);
-			for (int i = 0; i < nickNameListResponses.getContent().size(); i++) {
+			for (int i = 0; i < nickNameListResponses.getContent().size();
+				i++) {
 				nickNameListResponses.getContent().get(i)
 					.setBookmark(isBookmarks.get(i));
 			}
 		}
-
 
 		log.info("myList() : 조회 완료");
 
@@ -313,10 +314,6 @@ public class JourneyService {
 			throw new JourneyException(YOU_ARE_NOT_THE_AUTHOR);
 		}
 
-		awsS3Service.deleteFile(journey.getJourneyThumbnailUrl());
-		List<String> imageUrls = awsS3Service.uploadFiles(
-			Collections.singletonList(thumbnail));
-
 		List<JourneyTheme> journeyThemes = journeyThemeRepository
 			.findAllByJourneyId(journey.getId());
 
@@ -332,13 +329,19 @@ public class JourneyService {
 		}
 		log.info("updateJourney() : journeyTheme 수정 완료");
 
+		if (thumbnail != null) {
+			awsS3Service.deleteFile(journey.getJourneyThumbnailUrl());
+			List<String> imageUrls = awsS3Service.uploadFiles(
+				Collections.singletonList(thumbnail));
+			journey.setJourneyThumbnailUrl(imageUrls.get(0));
+		}
+
 		journey.setTitle(request.getTitle());
 		journey.setStartDate(request.getStartDate());
 		journey.setEndDate(request.getEndDate());
 		journey.setNumberOfPeople(request.getNumberOfPeople());
 		journey.setDisclosure(request.getDisclosure());
 		journey.setIntroductionText(request.getIntroductionText());
-		journey.setJourneyThumbnailUrl(imageUrls.get(0));
 		journey.setRegion(findByRegion(request.getRegion()));
 		log.info("updateJourney() : journey 수정 완료, journeyId : "
 			+ journey.getId());

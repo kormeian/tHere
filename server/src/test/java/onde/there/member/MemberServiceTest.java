@@ -248,6 +248,20 @@ public class MemberServiceTest {
         assertThat(updatedMember.getId()).isEqualTo(updateRequest.getId());
     }
 
+    @Test
+    void 회원_정보_수정_실패_찾을수_없는_회원 () {
+        // given
+        byte[] mockBinary = new byte[0];
+        MockMultipartFile mockMultipartFile = generateMockMultipartFile(mockBinary);
+        MemberDto.UpdateRequest updateRequest = generateUpdateRequestPasswordEmpty();
+        Member member = generateMember();
+        given(memberRepository.findById(any())).willReturn(Optional.empty());
+        // when
+        MemberException memberException = assertThrows(MemberException.class, () -> memberService.update(mockMultipartFile, updateRequest));
+        // then
+        assertThat(memberException.getMemberErrorCode()).isEqualTo(MemberErrorCode.MEMBER_NOT_FOUND);
+    }
+
     private MockMultipartFile generateMockMultipartFile(byte[] mockBinary) {
         return new MockMultipartFile("image", "test.png", "image/png", mockBinary);
     }

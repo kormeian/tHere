@@ -303,7 +303,7 @@ public class JourneyService {
 	public UpdateResponse updateJourney(UpdateRequest request,
 		MultipartFile thumbnail, String memberId) {
 
-		log.info("updateJourney() : 호출");
+		log.info("updateJourney() : 호출" + thumbnail);
 
 		verifyJwt(memberId);
 		Journey journey = journeyRepository.findById(request.getJourneyId())
@@ -329,7 +329,7 @@ public class JourneyService {
 		}
 		log.info("updateJourney() : journeyTheme 수정 완료");
 
-		if (thumbnail != null) {
+		if (!thumbnail.isEmpty()) {
 			awsS3Service.deleteFile(journey.getJourneyThumbnailUrl());
 			List<String> imageUrls = awsS3Service.uploadFiles(
 				Collections.singletonList(thumbnail));

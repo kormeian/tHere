@@ -38,7 +38,27 @@ public class MemberServiceTest {
     @Mock
     AwsS3Service awsS3Service;
 
+    @Test
+    void 아이디_중복_체크_성공_사용_가능한_아이디 () {
+        // given
+        MemberDto.CheckIdRequest request = generateCheckIdRequest();
+        given(memberRepository.existsById(request.getId())).willReturn(false);
+        // when
+        boolean result = memberService.checkId(request);
+        // then
+        assertThat(result).isTrue();
+    }
 
+    @Test
+    void 아이디_중복_체크_성공_사용_불가능한_아이디 () {
+        // given
+        MemberDto.CheckIdRequest request = generateCheckIdRequest();
+        given(memberRepository.existsById(request.getId())).willReturn(true);
+        // when
+        boolean result = memberService.checkId(request);
+        // then
+        assertThat(result).isFalse();
+    }
 
     @Test
     void 이메일_중복_체크_성공_사용_가능한_이메일 () {
@@ -66,5 +86,9 @@ public class MemberServiceTest {
 
     private MemberDto.CheckEmailRequest generateCheckEmailRequest() {
         return MemberDto.CheckEmailRequest.builder().email("test").build();
+    }
+
+    private MemberDto.CheckIdRequest generateCheckIdRequest() {
+        return MemberDto.CheckIdRequest.builder().id("test").build();
     }
 }

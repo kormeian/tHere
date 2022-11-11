@@ -38,8 +38,10 @@ public class MemberServiceTest {
     @Mock
     AwsS3Service awsS3Service;
 
+
+
     @Test
-    void 아이디_중복_체크_성공_사용_가능한_이메일 () {
+    void 이메일_중복_체크_성공_사용_가능한_이메일 () {
         // given
         MemberDto.CheckEmailRequest request = generateCheckEmailRequest();
         given(memberRepository.existsByEmail(request.getEmail())).willReturn(false);
@@ -50,7 +52,7 @@ public class MemberServiceTest {
     }
 
     @Test
-    void 아이디_중복_체크_성공_사용_불가능한_이메일 () {
+    void 이메일_중복_체크_성공_사용_불가능한_이메일 () {
         // given
         MemberDto.CheckEmailRequest request = generateCheckEmailRequest();
         given(memberRepository.existsByEmail(request.getEmail())).willReturn(true);
@@ -59,6 +61,8 @@ public class MemberServiceTest {
         // then
         assertThat(result).isFalse();
     }
+
+
 
     private MemberDto.CheckEmailRequest generateCheckEmailRequest() {
         return MemberDto.CheckEmailRequest.builder().email("test").build();

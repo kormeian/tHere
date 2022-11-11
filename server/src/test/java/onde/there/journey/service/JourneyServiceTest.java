@@ -96,7 +96,6 @@ public class JourneyServiceTest {
 
 		CreateResponse journeyDto = journeyService.createJourney(
 			CreateRequest.builder()
-				.memberId("tHereId")
 				.title("TitleTest")
 				.startDate(LocalDate.parse("2022-10-16"))
 				.endDate(LocalDate.parse("2022-10-17"))
@@ -148,7 +147,6 @@ public class JourneyServiceTest {
 		JourneyException exception = assertThrows(JourneyException.class,
 			() -> journeyService.createJourney(
 				CreateRequest.builder()
-					.memberId("tHereEmail")
 					.title("TitleTest")
 					.startDate(LocalDate.parse("2022-10-16"))
 					.endDate(LocalDate.parse("2022-10-15"))
@@ -189,7 +187,6 @@ public class JourneyServiceTest {
 		JourneyException exception = assertThrows(JourneyException.class,
 			() -> journeyService.createJourney(
 				JourneyDto.CreateRequest.builder()
-					.memberId("tHereEmail")
 					.title("TitleTest")
 					.startDate(LocalDate.parse("2022-10-16"))
 					.endDate(LocalDate.parse("2022-10-17"))
@@ -230,7 +227,6 @@ public class JourneyServiceTest {
 		JourneyException exception = assertThrows(JourneyException.class,
 			() -> journeyService.createJourney(
 				JourneyDto.CreateRequest.builder()
-					.memberId("tHereId")
 					.title("TitleTest")
 					.startDate(LocalDate.parse("2022-10-16"))
 					.endDate(LocalDate.parse("2022-10-17"))

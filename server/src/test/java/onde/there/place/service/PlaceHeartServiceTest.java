@@ -12,7 +12,6 @@ import onde.there.member.repository.MemberRepository;
 import onde.there.place.exception.PlaceErrorCode;
 import onde.there.place.exception.PlaceException;
 import onde.there.place.repository.PlaceHeartRepository;
-import onde.there.place.repository.PlaceHeartSchedulingRepository;
 import onde.there.place.repository.PlaceRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -32,9 +31,6 @@ class PlaceHeartServiceTest {
 	private PlaceRepository placeRepository;
 	@Autowired
 	private MemberRepository memberRepository;
-	@Autowired
-	private PlaceHeartSchedulingRepository placeHeartSchedulingRepository;
-
 
 	@DisplayName("01_00. heart success -> Place.placeHeartSum < 1000")
 	@Test
@@ -76,7 +72,6 @@ class PlaceHeartServiceTest {
 		//then
 		assertEquals(place.getPlaceHeartCount(), 10000);
 		assertTrue(placeHeartRepository.existsByPlaceIdAndMemberId(place.getId(), "testMember"));
-		assertEquals(placeHeartSchedulingRepository.findAll().size(), 1);
 	}
 
 	@DisplayName("01_02. heart fail not found place")

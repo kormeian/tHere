@@ -37,6 +37,7 @@ import onde.there.place.repository.PlaceImageRepository;
 import onde.there.place.repository.PlaceRepository;
 import onde.there.place.repository.PlaceRepositoryCustomImpl;
 import onde.there.place.service.PlaceService;
+import onde.there.place.utils.RedisServiceForPlace;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -72,7 +73,7 @@ class PlaceServiceTest {
 	private CommentRepository commentRepository;
 
 	@Mock
-	private MemberRepository memberRepository;
+	private RedisServiceForPlace<Long> redisService;
 
 	@Mock
 	private AwsS3Service awsS3Service;
@@ -239,7 +240,7 @@ class PlaceServiceTest {
 		place.setPlaceImages(List.of(placeImage, placeImage1));
 
 		given(journeyRepository.findById(any())).willReturn(Optional.of(journey));
-		given(placeRepository.findAllByJourneyIdOrderByPlaceTimeAsc(journey.getId()))
+		given(placeRepository.findAllByJourneyIdAndDeletedOrderByPlaceTimeAsc(journey.getId(), false))
 			.willReturn(List.of(place, place));
 
 		//when
@@ -272,28 +273,15 @@ class PlaceServiceTest {
 		Member member = getMember();
 		Journey journey = getJourney(member);
 		Place place = getPlace(journey);
-		PlaceImage placeImage = getPlaceImage(place, "url0");
-		PlaceImage placeImage1 = getPlaceImage(place, "url1");
-		List<PlaceImage> placeImages = new ArrayList<>(List.of(placeImage, placeImage1));
-		place.setPlaceImages(placeImages);
-		PlaceHeart heart = getHeart(member, place);
-		Comment comment = getComment(member, place);
 
 		given(placeRepository.findById(any())).willReturn(Optional.of(place));
-		given(placeImageRepository.findAllByPlaceId(any())).willReturn(placeImages);
-		given(commentRepository.findAllByPlaceId(any())).willReturn(List.of(comment));
-		given(placeHeartRepository.findAllByPlaceId(any())).willReturn(List.of(heart));
 
 		//when
 		boolean deletePlace = placeService.deletePlace(1L, "memberId");
 
 		//then
-		verify(placeRepository, times(1)).delete(any());
-		verify(placeImageRepository, times(2)).delete(any());
-		verify(placeHeartRepository, times(1)).deleteAll(any());
-		verify(commentRepository, times(1)).deleteAll(any());
-
-		assertTrue(deletePlace);
+//		verify(placeRepository, times(1)).save(any());
+		assertTrue(place.isDeleted());
 	}
 
 	@DisplayName("04_01. deletePlace fail not found place")
@@ -335,27 +323,15 @@ class PlaceServiceTest {
 		Member member = getMember();
 		Journey journey = getJourney(member);
 		Place place = getPlace(journey);
-		PlaceImage placeImage = getPlaceImage(place, "url0");
-		PlaceImage placeImage1 = getPlaceImage(place, "url1");
-		List<PlaceImage> placeImages = new ArrayList<>(List.of(placeImage, placeImage1));
-		place.setPlaceImages(placeImages);
-		PlaceHeart heart = getHeart(member, place);
-		Comment comment = getComment(member, place);
 
 		given(journeyRepository.findById(any())).willReturn(Optional.of(journey));
 		given(placeRepository.findAllByJourneyId(any())).willReturn(List.of(place));
-		given(placeImageRepository.findAllByPlaceId(any())).willReturn(placeImages);
-		given(commentRepository.findAllByPlaceId(any())).willReturn(List.of(comment));
-		given(placeHeartRepository.findAllByPlaceId(any())).willReturn(List.of(heart));
 
 		//when
 		boolean deletePlace = placeService.deleteAll(1L, "memberId");
 
 		//then
-		verify(placeImageRepository, times(2)).delete(any());
-		verify(placeHeartRepository, times(1)).deleteAll(any());
-		verify(commentRepository, times(1)).deleteAll(any());
-		verify(placeRepository, times(1)).deleteAll(any());
+		assertTrue(place.isDeleted());
 	}
 
 	@DisplayName("05_01. deleteAll fail not found journey")

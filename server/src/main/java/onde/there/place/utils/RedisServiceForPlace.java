@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 
 @RequiredArgsConstructor
 @Service
-public class RedisServiceForPlaceHeart<T> {
+public class RedisServiceForPlace<T> {
 
 	private final RedisTemplate<String, T> redisTemplate;
 

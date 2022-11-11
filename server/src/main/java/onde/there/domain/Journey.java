@@ -70,4 +70,6 @@ public class Journey {
 	@BatchSize(size = 10)
 	private List<JourneyTheme> journeyThemes = new ArrayList<>();
 
+	@Column(name = "delete")
+	private boolean delete;
 }

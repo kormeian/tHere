@@ -82,7 +82,27 @@ public class MemberServiceTest {
         assertThat(result).isFalse();
     }
 
+    @Test
+    void 닉네임_중복_체크_성공_사용_가능한_닉네임 () {
+        // given
+        String nickName = "test";
+        given(memberRepository.existsByNickName(nickName)).willReturn(true);
+        // when
+        boolean result = memberService.checkNickName(nickName);
+        // then
+        assertThat(result).isFalse();
+    }
 
+    @Test
+    void 닉네임_중복_체크_성공_사용_불가능한_닉네임 () {
+        // given
+        String nickName = "test";
+        given(memberRepository.existsByNickName(nickName)).willReturn(false);
+        // when
+        boolean result = memberService.checkNickName(nickName);
+        // then
+        assertThat(result).isTrue();
+    }
 
     private MemberDto.CheckEmailRequest generateCheckEmailRequest() {
         return MemberDto.CheckEmailRequest.builder().email("test").build();

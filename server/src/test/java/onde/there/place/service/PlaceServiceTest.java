@@ -94,10 +94,10 @@ class PlaceServiceTest {
 			.placeName("어딘가")
 			.build();
 		//when
-		Place place = placeService.createPlace(multipartFile, request, "memberId");
+		Response place = placeService.createPlace(multipartFile, request, "memberId");
 		//then
-		assertEquals(place.getJourney().getId(), journey.getId());
-		assertEquals(3, placeImageRepository.findAllByPlaceId(place.getId()).size());
+		assertEquals(place.getJourneyId(), journey.getId());
+		assertEquals(3, placeImageRepository.findAllByPlaceId(place.getPlaceId()).size());
 	}
 
 	@Test
@@ -272,23 +272,38 @@ class PlaceServiceTest {
 		//given
 		Journey journey = journeyRepository.save(Journey.builder().build());
 		List<PlaceImage> placeImages = new ArrayList<>();
-		for (int i = 0; i < 2; i++) {
-			placeImages.add(placeImageRepository.save(PlaceImage.builder()
-				.imageUrl("url" + i)
-				.build()));
-		}
-
 		for (int i = 0; i < 3; i++) {
+			placeImages = new ArrayList<>();
 			Place save = placeRepository.save(Place.builder()
-				.journey(journey)
+				.latitude(1.0)
+				.longitude(1.0)
+				.title("test title")
+				.text("test text")
+				.addressName("test addressName")
+				.region1("test region1")
+				.region2("test region2")
+				.region3("test region3")
+				.region4("test region4")
+				.placeTime(LocalDateTime.now())
 				.placeCategory(PlaceCategoryType.ECT)
-				.placeTime(LocalDateTime.now().plusSeconds(i))
+				.placeName("test placeName")
+				.journey(journey)
 				.build());
+
+			for (int k = 0; k < 2; k++) {
+				placeImages.add(placeImageRepository.save(PlaceImage.builder()
+					.place(save)
+					.imageUrl("url" + k)
+					.build()));
+			}
 			save.setPlaceImages(placeImages);
 		}
 
 		//when
-		List<PlaceDto.Response> list = placeService.list(journey.getId(), "memberId");
+		List<PlaceDto.Response> list = placeService.placeListOfJourney(journey.getId(), "memberId");
+		for (Response r : list) {
+			System.out.println(r);
+		}
 		System.out.println(list.get(0).getImageUrls());
 		//then
 		assertEquals(list.size(), 3);
@@ -329,7 +344,7 @@ class PlaceServiceTest {
 		}
 
 		//when
-		List<PlaceDto.Response> list = placeService.list(journey.getId(), "memberId");
+		List<PlaceDto.Response> list = placeService.placeListOfJourney(journey.getId(), "memberId");
 
 		for (int i = 0; i < list.size(); i++) {
 			System.out.println(list.get(i));
@@ -365,7 +380,7 @@ class PlaceServiceTest {
 		}
 
 		//when
-		List<PlaceDto.Response> list = placeService.list(journey.getId(), "");
+		List<PlaceDto.Response> list = placeService.placeListOfJourney(journey.getId(), "");
 
 		//then
 		assertEquals(list.size(), 3);
@@ -384,7 +399,7 @@ class PlaceServiceTest {
 
 		//when
 		PlaceException placeException = assertThrows(PlaceException.class,
-			() -> placeService.list(1000000L, "memberId"));
+			() -> placeService.placeListOfJourney(1000000L, "memberId"));
 
 		//then
 		assertEquals(placeException.getErrorCode(), PlaceErrorCode.NOT_FOUND_JOURNEY);
@@ -415,7 +430,7 @@ class PlaceServiceTest {
 		}
 
 		//when
-		boolean delete = placeService.delete(save.getId(), "memberId");
+		boolean delete = placeService.deletePlace(save.getId(), "memberId");
 		//then
 		assertTrue(delete);
 		for (Long aLong : placeImageId) {
@@ -430,7 +445,7 @@ class PlaceServiceTest {
 
 		//when
 		PlaceException placeException = assertThrows(PlaceException.class,
-			() -> placeService.delete(100011L, "memberId"));
+			() -> placeService.deletePlace(100011L, "memberId"));
 
 		//then
 		assertEquals(placeException.getErrorCode(), PlaceErrorCode.NOT_FOUND_PLACE);
@@ -459,7 +474,7 @@ class PlaceServiceTest {
 
 		//when
 		PlaceException placeException = assertThrows(PlaceException.class,
-			() -> placeService.delete(save.getId(), "asdf"));
+			() -> placeService.deletePlace(save.getId(), "asdf"));
 		//then
 		assertEquals(placeException.getErrorCode(), PlaceErrorCode.MISMATCH_MEMBER_ID);
 	}
@@ -632,7 +647,7 @@ class PlaceServiceTest {
 			.build();
 
 		Response response = placeService.updatePlace(multipartFile, updateRequest, "memberId");
-
+		System.out.println(response.getImageUrls());
 		//then
 		assertEquals(response.getImageUrls().size(), 3);
 		assertEquals(response.getPlaceId(), savePlace.getId());

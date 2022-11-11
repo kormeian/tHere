@@ -41,8 +41,8 @@ public class JourneyBookmarkDto {
 			Member member = journeyBookmark.getMember();
 			return JourneyBookmarkPageResponse.builder()
 				.journeyId(journey.getId())
-				.nickName(member.getNickName())
-				.profileImageUrl(member.getProfileImageUrl())
+				.nickName(journey.getMember().getNickName())
+				.profileImageUrl(journey.getMember().getProfileImageUrl())
 				.title(journey.getTitle())
 				.startDate(journey.getStartDate())
 				.endDate(journey.getEndDate())

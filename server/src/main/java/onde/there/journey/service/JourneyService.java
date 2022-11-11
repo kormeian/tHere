@@ -329,13 +329,9 @@ public class JourneyService {
 		}
 		log.info("updateJourney() : journeyTheme 수정 완료");
 
-		if (!thumbnail.isEmpty()) {
-			awsS3Service.deleteFile(journey.getJourneyThumbnailUrl());
-			List<String> imageUrls = awsS3Service.uploadFiles(
-				Collections.singletonList(thumbnail));
-			journey.setJourneyThumbnailUrl(imageUrls.get(0));
-		}
 
+		String imageUrl = updateThumbnailUrl(thumbnail, journey);
+		journey.setJourneyThumbnailUrl(imageUrl);
 		journey.setTitle(request.getTitle());
 		journey.setStartDate(request.getStartDate());
 		journey.setEndDate(request.getEndDate());
@@ -369,5 +365,10 @@ public class JourneyService {
 		if (memberId == null) {
 			throw new JourneyException(AVAILABLE_AFTER_LONGIN);
 		}
+	}
+
+	private String updateThumbnailUrl(MultipartFile multipartFile, Journey journey) {
+		boolean condition = multipartFile == null || multipartFile.isEmpty();
+		return condition ? journey.getJourneyThumbnailUrl() : awsS3Service.uploadFiles(List.of(multipartFile)).get(0);
 	}
 }

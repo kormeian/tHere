@@ -67,14 +67,7 @@ public class Place {
 
 	private long placeHeartCount;
 
-	@BatchSize(size = 10)
+	@BatchSize(size = 11)
 	@OneToMany(mappedBy = "place")
 	private List<PlaceImage> placeImages = new ArrayList<>();
-
-	public void setPlaceImages(List<PlaceImage> placeImages) {
-		this.placeImages = placeImages;
-		for (PlaceImage placeImage : placeImages) {
-			placeImage.setPlace(this);
-		}
-	}
 }

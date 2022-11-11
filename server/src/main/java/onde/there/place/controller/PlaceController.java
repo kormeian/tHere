@@ -44,8 +44,7 @@ public class PlaceController {
 		@RequestPart @Valid PlaceDto.CreateRequest request,
 		@Parameter(hidden = true)
 		@TokenMemberId String memberId) {
-		return ResponseEntity.ok(
-			Response.toResponse(placeService.createPlace(multipartFile, request, memberId)));
+		return ResponseEntity.ok(placeService.createPlace(multipartFile, request, memberId));
 	}
 
 	@Operation(summary = "장소 조회", description = "placeId에 해당하는 장소 조회")
@@ -65,7 +64,7 @@ public class PlaceController {
 		@RequestParam Long journeyId,
 		@Parameter(hidden = true)
 		@TokenMemberId String memberId) {
-		return ResponseEntity.ok(placeService.list(journeyId, memberId));
+		return ResponseEntity.ok(placeService.placeListOfJourney(journeyId, memberId));
 	}
 
 	@Operation(summary = "장소 삭제", description = "placeId에 해당하는 장소 삭제")
@@ -75,7 +74,7 @@ public class PlaceController {
 		@RequestParam Long placeId,
 		@Parameter(hidden = true)
 		@TokenMemberId String memberId) {
-		return ResponseEntity.ok(placeService.delete(placeId, memberId));
+		return ResponseEntity.ok(placeService.deletePlace(placeId, memberId));
 	}
 
 	@Operation(summary = "여정의 모든 장소 삭제", description = "journeyId에 해당하는 여정에 포함된 모든 장소 삭제")

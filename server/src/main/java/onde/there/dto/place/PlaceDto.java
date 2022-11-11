@@ -15,6 +15,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import onde.there.domain.Journey;
 import onde.there.domain.Place;
 import onde.there.domain.PlaceImage;
 import onde.there.domain.type.PlaceCategoryType;
@@ -115,7 +116,7 @@ public class PlaceDto {
 		@NotBlank(message = "placeName 값을 입력 해 주세요!")
 		private String placeName;
 
-		public Place toEntity() {
+		public Place toEntity(Journey journey) {
 			return Place.builder()
 				.id(this.getPlaceId())
 				.latitude(this.latitude)
@@ -130,6 +131,8 @@ public class PlaceDto {
 				.placeTime(this.placeTime)
 				.placeCategory(PlaceCategoryType.toPlaceCategoryType(this.placeCategory))
 				.placeName(this.placeName)
+				.placeImages(new ArrayList<>())
+				.journey(journey)
 				.build();
 		}
 	}

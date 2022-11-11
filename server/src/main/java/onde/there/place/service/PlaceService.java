@@ -135,6 +135,7 @@ public class PlaceService {
 
 		log.info("장소에 이미지 제외한 값 업데이트 시작! (장소 아이디 : " + request.getPlaceId() + ")");
 		Place updatePlace = request.toEntity(savedPlace.getJourney());
+		updatePlace.setPlaceHeartCount(savedPlace.getPlaceHeartCount());
 		log.info("장소에 이미지 제외한 값 업데이트 완료! (장소 아이디 : " + request.getPlaceId() + ")");
 
 		deletePlaceImagesInPlace(request.getPlaceId());

@@ -141,7 +141,7 @@ public class PlaceService {
 
 		List<String> updateUrls = imageUploadToS3(multipartFile);
 		savePlaceImage(updatePlace, updateUrls);
-
+		placeRepository.save(updatePlace);
 		Response response = Response.toResponse(updatePlace);
 		response.setImageUrls(updateUrls);
 

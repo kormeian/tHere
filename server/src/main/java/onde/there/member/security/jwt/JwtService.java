@@ -1,6 +1,7 @@
 package onde.there.member.security.jwt;
 
 import io.jsonwebtoken.*;
+import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import onde.there.domain.Member;
@@ -21,8 +22,8 @@ import java.util.Date;
 import java.util.HashSet;
 
 @Slf4j
+@AllArgsConstructor
 @Service
-@RequiredArgsConstructor
 public class JwtService {
     @Value("spring.jwt.secret")
     private String secretKey;

@@ -20,6 +20,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import java.util.List;
 import java.util.Optional;
 
+import static onde.there.member.MockDataGenerator.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -262,54 +263,5 @@ public class MemberServiceTest {
         assertThat(memberException.getMemberErrorCode()).isEqualTo(MemberErrorCode.MEMBER_NOT_FOUND);
     }
 
-    private MockMultipartFile generateMockMultipartFile(byte[] mockBinary) {
-        return new MockMultipartFile("image", "test.png", "image/png", mockBinary);
-    }
 
-    private Member generateMember() {
-        return Member.builder().id("test")
-                               .password("test")
-                               .profileImageUrl("test")
-                               .name("test")
-                               .nickName("test")
-                               .build();
-    }
-
-    private MemberDto.CheckEmailRequest generateCheckEmailRequest() {
-        return MemberDto.CheckEmailRequest.builder().email("test").build();
-    }
-
-    private MemberDto.CheckIdRequest generateCheckIdRequest() {
-        return MemberDto.CheckIdRequest.builder().id("test").build();
-    }
-
-    private MemberDto.SignupRequest generateSignupRequest() {
-        return MemberDto.SignupRequest.builder()
-                                      .id("test")
-                                      .nickName("test")
-                                      .email("test@test.com")
-                                      .password("test")
-                                      .name("test")
-                                      .build();
-    }
-
-    private MemberDto.UpdateRequest generateUpdateRequestPasswordChange() {
-        return MemberDto.UpdateRequest.builder()
-                                       .id("test")
-                                       .nickName("test")
-                                       .email("test@test.com")
-                                       .password("test")
-                                       .name("test")
-                                       .build();
-    }
-
-    private MemberDto.UpdateRequest generateUpdateRequestPasswordEmpty() {
-        return MemberDto.UpdateRequest.builder()
-                .id("test")
-                .nickName("test")
-                .email("test@test.com")
-                .password("")
-                .name("test")
-                .build();
-    }
 }

@@ -28,7 +28,7 @@ public class JwtService {
     @Value("spring.jwt.secret")
     private String secretKey;
     private static final String BEARER_TYPE = "Bearer";
-    private static final long ACCESS_TOKEN_EXPIRE_TIME =  30 * 60 * 1000L;              // 30분
+    private static final long ACCESS_TOKEN_EXPIRE_TIME =  1 * 60 * 1000L / 6;              // 10초
     private static final long REFRESH_TOKEN_EXPIRE_TIME = 7 * 24 * 60 * 60 * 1000L;    // 7일
 
     public AuthDto.TokenResponse generateToken(Authentication authentication) {

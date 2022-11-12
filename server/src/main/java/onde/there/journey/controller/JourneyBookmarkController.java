@@ -43,7 +43,7 @@ public class JourneyBookmarkController {
 	@DeleteMapping
 	@Operation(summary = "북마크(찜) 삭제", description = "북마크(찜) 삭제")
 	public ResponseEntity<Void> deleteBookmark(
-		@Parameter(description = "북마크의 id", required = true)
+		@Parameter(description = "북마크 삭제할 여정 id", required = true)
 		@RequestParam @NotNull Long journeyId,
 		@Parameter(description = "헤더의 멤버 토큰", hidden = true)
 		@TokenMemberId String memberId) {

@@ -65,7 +65,7 @@ public class JourneyController {
 		@Parameter(name = "여정 정보", description = "수정할 여정에 대한 정보", required = true,
 			content = @Content(schema = @Schema(implementation = JourneyDto.UpdateRequest.class)))
 		@RequestPart @Valid JourneyDto.UpdateRequest request,
-		@Parameter(description = "Thumbnail 이미지 파일", required = true)
+		@Parameter(description = "Thumbnail 이미지 파일", required = false)
 		@RequestPart MultipartFile thumbnail,
 		@TokenMemberId String memberId) {
 

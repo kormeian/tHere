@@ -24,9 +24,10 @@ import java.util.HashSet;
 @Slf4j
 @Service
 public class JwtService {
-    private String secretKey = "test";
+    @Value("${jwt.secret}")
+    private String secretKey;
     private static final String BEARER_TYPE = "Bearer";
-    private static final long ACCESS_TOKEN_EXPIRE_TIME =  1 * 60 * 1000L / 6;              // 10초
+    private static final long ACCESS_TOKEN_EXPIRE_TIME =  24 * 60 * 60 * 1000L;        // 1시간
     private static final long REFRESH_TOKEN_EXPIRE_TIME = 7 * 24 * 60 * 60 * 1000L;    // 7일
 
     public AuthDto.TokenResponse generateToken(Authentication authentication) {

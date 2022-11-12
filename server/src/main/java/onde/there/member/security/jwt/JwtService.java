@@ -1,7 +1,6 @@
 package onde.there.member.security.jwt;
 
 import io.jsonwebtoken.*;
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import onde.there.domain.Member;
@@ -22,13 +21,10 @@ import java.util.Date;
 import java.util.HashSet;
 
 @Slf4j
+@RequiredArgsConstructor
 @Service
 public class JwtService {
-    @Value("${jwt.secret}")
-    private String secretKey;
-    private static final String BEARER_TYPE = "Bearer";
-    private static final long ACCESS_TOKEN_EXPIRE_TIME =  24 * 60 * 60 * 1000L;        // 1시간
-    private static final long REFRESH_TOKEN_EXPIRE_TIME = 7 * 24 * 60 * 60 * 1000L;    // 7일
+    private final JwtConfig jwtConfig;
 
     public AuthDto.TokenResponse generateToken(Authentication authentication) {
         long now = (new Date()).getTime();
@@ -51,15 +47,15 @@ public class JwtService {
         // TODO 고칠 수 있을 거 같음
         return Jwts.builder()
                 .setSubject(memberId)
-                .setExpiration(new Date(now + ACCESS_TOKEN_EXPIRE_TIME))
-                .signWith(SignatureAlgorithm.HS256, secretKey)
+                .setExpiration(new Date(now + jwtConfig.getAccessTokenExpireTime()))
+                .signWith(SignatureAlgorithm.HS256, jwtConfig.getSecretKey())
                 .compact();
     }
 
     private String generateRefreshToken(long now) {
         return Jwts.builder()
-                .setExpiration(new Date(now + REFRESH_TOKEN_EXPIRE_TIME))
-                .signWith(SignatureAlgorithm.HS256, secretKey)
+                .setExpiration(new Date(now + jwtConfig.getRefreshTokenExpireTime()))
+                .signWith(SignatureAlgorithm.HS256, jwtConfig.getSecretKey())
                 .compact();
     }
 
@@ -74,7 +70,7 @@ public class JwtService {
 
     public void validateToken(String token, TokenType tokenType) {
         try {
-            Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token);
+            Jwts.parser().setSigningKey(jwtConfig.getSecretKey()).parseClaimsJws(token);
         } catch (MalformedJwtException e) {
             log.error("지원 하지 않는 토큰");
             logToken(log, tokenType, token);
@@ -96,7 +92,7 @@ public class JwtService {
 
     public Long getExpiration(String accessToken) {
         // accessToken 남은 유효시간
-        Date expiration = Jwts.parser().setSigningKey(secretKey).parseClaimsJws(accessToken).getBody().getExpiration();
+        Date expiration = Jwts.parser().setSigningKey(jwtConfig.getSecretKey()).parseClaimsJws(accessToken).getBody().getExpiration();
         // 현재 시간
         Long now = new Date().getTime();
         return (expiration.getTime() - now);
@@ -104,7 +100,7 @@ public class JwtService {
 
     private Claims parseClaims(String accessToken) {
         try {
-            return Jwts.parser().setSigningKey(secretKey).parseClaimsJws(accessToken).getBody();
+            return Jwts.parser().setSigningKey(jwtConfig.getSecretKey()).parseClaimsJws(accessToken).getBody();
         } catch (ExpiredJwtException e) {
             return e.getClaims();
         }
@@ -144,10 +140,10 @@ public class JwtService {
 
     private AuthDto.TokenResponse buildTokenResponse(String accessToken, String refreshToken) {
         return AuthDto.TokenResponse.builder()
-                .grantType(BEARER_TYPE)
+                .grantType(jwtConfig.getBearerType())
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
-                .refreshTokenExpirationTime(REFRESH_TOKEN_EXPIRE_TIME)
+                .refreshTokenExpirationTime(jwtConfig.getRefreshTokenExpireTime())
                 .build();
     }
 }

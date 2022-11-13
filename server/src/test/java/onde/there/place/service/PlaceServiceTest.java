@@ -28,7 +28,7 @@ import onde.there.place.exception.PlaceException;
 import onde.there.place.repository.PlaceHeartRepository;
 import onde.there.place.repository.PlaceImageRepository;
 import onde.there.place.repository.PlaceRepository;
-import onde.there.place.utils.RedisServiceForPlace;
+import onde.there.utils.RedisServiceForSoftDelete;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -63,7 +63,7 @@ class PlaceServiceTest {
 	private AwsS3Service awsS3Service;
 
 	@Autowired
-	private RedisServiceForPlace<Long> redisService;
+	private RedisServiceForSoftDelete<Long> redisService;
 
 	private static final String PLACE_ID = "placeId";
 

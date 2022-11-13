@@ -19,7 +19,7 @@ import onde.there.place.exception.PlaceException;
 import onde.there.place.repository.PlaceHeartRepository;
 import onde.there.place.repository.PlaceRepository;
 import onde.there.place.service.PlaceHeartService;
-import onde.there.place.utils.RedisServiceForPlace;
+import onde.there.utils.RedisServiceForSoftDelete;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -43,7 +43,7 @@ class PlaceHeartServiceTest {
 	private MemberRepository memberRepository;
 
 	@Mock
-	private RedisServiceForPlace<Long> redisService;
+	private RedisServiceForSoftDelete<Long> redisService;
 
 	@DisplayName("01_00. heart success placeHeartCount < 1000")
 	@Test

@@ -3,12 +3,10 @@ package onde.there.domain;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
-import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -20,7 +18,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import onde.there.domain.type.JourneyThemeType;
 import onde.there.domain.type.RegionType;
 import org.hibernate.annotations.BatchSize;
 
@@ -70,6 +67,6 @@ public class Journey {
 	@BatchSize(size = 10)
 	private List<JourneyTheme> journeyThemes = new ArrayList<>();
 
-	@Column(name = "delete")
-	private boolean delete;
+	@Column(name = "deleted")
+	private boolean deleted;
 }

@@ -426,15 +426,20 @@ class PlaceServiceTest {
 
 		given(placeImageRepository.save(any())).willReturn(placeImage);
 
+		ArgumentCaptor<Place> placeCaptor = ArgumentCaptor.forClass(Place.class);
+		ArgumentCaptor<PlaceImage> placeImageCaptor = ArgumentCaptor.forClass(PlaceImage.class);
 		//when
 		List<MultipartFile> multipartFile = getMultipartFiles();
 
 		UpdateRequest request = getUpdateRequest(journey);
 		Response response = placeService.updatePlace(multipartFile, request, member.getId());
 
+
 		//then
+		verify(placeRepository, times(1)).save(placeCaptor.capture());
+		verify(placeImageRepository, times(2)).save(placeImageCaptor.capture());
 		verify(placeImageRepository, times(2)).delete(any());
-		verify(placeImageRepository, times(2)).save(any());
+		assertEquals(placeCaptor.getValue().getPlaceName(), request.getPlaceName());
 	}
 
 	@DisplayName("06_01. updatePlace fail not found place")
@@ -521,10 +526,8 @@ class PlaceServiceTest {
 
 
 	private Comment getComment(Member member, Place place) {
-		Comment comment = Comment.builder().place(place).member(member).text("test comment")
+		return Comment.builder().id(1L).place(place).member(member).text("test comment")
 			.build();
-		comment.setId(1L);
-		return comment;
 	}
 
 	private static List<MultipartFile> getMultipartFiles() throws IOException {

@@ -1,6 +1,7 @@
 package onde.there.member.security.jwt;
 
 import io.jsonwebtoken.*;
+import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import onde.there.domain.Member;
@@ -22,12 +23,11 @@ import java.util.HashSet;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class JwtService {
-    @Value("spring.jwt.secret")
+    @Value("${jwt.secret}")
     private String secretKey;
     private static final String BEARER_TYPE = "Bearer";
-    private static final long ACCESS_TOKEN_EXPIRE_TIME =  30 * 60 * 1000L;              // 30분
+    private static final long ACCESS_TOKEN_EXPIRE_TIME =  24 * 60 * 60 * 1000L;        // 1시간
     private static final long REFRESH_TOKEN_EXPIRE_TIME = 7 * 24 * 60 * 60 * 1000L;    // 7일
 
     public AuthDto.TokenResponse generateToken(Authentication authentication) {

@@ -1,148 +1,267 @@
 package onde.there.member;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import onde.there.domain.Member;
 import onde.there.dto.member.MemberDto;
+import onde.there.image.service.AwsS3Service;
 import onde.there.member.exception.MemberException;
 import onde.there.member.exception.type.MemberErrorCode;
-import onde.there.member.security.jwt.JwtService;
+import onde.there.member.repository.MemberRepository;
 import onde.there.member.service.MemberService;
 import onde.there.member.utils.MailService;
 import onde.there.member.utils.RedisService;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.JavaMailSenderImpl;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.transaction.annotation.Transactional;
 
-@SpringBootTest
+import java.util.List;
+import java.util.Optional;
+
+import static onde.there.member.MockDataGenerator.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
+
+@ExtendWith(MockitoExtension.class)
 public class MemberServiceTest {
 
-    @Autowired
-    private MemberService memberService;
+    @InjectMocks
+    MemberService memberService;
 
-    @Autowired
-    private onde.there.member.repository.MemberRepository memberRepository;
+    @Mock
+    MemberRepository memberRepository;
 
-    @Autowired
-    private RedisService<Member> redisService;
-    @Autowired
-    private RedisService<String> tokenService;
+    @Mock
+    PasswordEncoder passwordEncoder;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    @Mock
+    RedisService<Member> memberRedisService;
 
-    @Autowired
-    private JwtService jwtService;
+    @Mock
+    MailService mailService;
 
-    class TestMailService extends MailService {
+    @Mock
+    AwsS3Service awsS3Service;
 
-        public TestMailService(JavaMailSender javaMailSender) {
-            super(javaMailSender);
-        }
-
-        @Override
-        public void sendSignupMail(String uuid, Member member) {
-            System.out.println("메일 전송 기능 잘 호출 됨");
-        }
-    }
-
-    @Transactional
     @Test
-    void 아이디중복_확인_성공_케이스_중복된아이디 () {
+    void 아이디_중복_체크_성공_사용_가능한_아이디 () {
         // given
-        Member member = new Member("test2", "test2", "test2", "test2");
-        memberRepository.save(member);
+        MemberDto.CheckIdRequest request = generateCheckIdRequest();
+        given(memberRepository.existsById(request.getId())).willReturn(false);
         // when
-        MemberDto.CheckIdRequest request = new MemberDto.CheckIdRequest("test2");
-        boolean result = memberService.checkId(request);
-        // then
-        assertThat(result).isFalse();
-    }
-
-    @Transactional
-    @Test
-    void 아이디중복_확인_성공_케이스_사용가능아이디 () {
-        // given
-        Member member = new Member("test2", "test2", "test2", "test2");
-        memberRepository.save(member);
-        // when
-        MemberDto.CheckIdRequest request = new MemberDto.CheckIdRequest("newId");
         boolean result = memberService.checkId(request);
         // then
         assertThat(result).isTrue();
     }
 
-    @Transactional
     @Test
-    void 이메일중복_확인_성공_케이스_중복된아이디 () {
+    void 아이디_중복_체크_성공_사용_불가능한_아이디 () {
         // given
-        Member member = new Member("test2", "test2", "test2", "test2");
-        memberRepository.save(member);
+        MemberDto.CheckIdRequest request = generateCheckIdRequest();
+        given(memberRepository.existsById(request.getId())).willReturn(true);
         // when
-        MemberDto.CheckEmailRequest request = new MemberDto.CheckEmailRequest("test2");
-        boolean result = memberService.checkEmail(request);
+        boolean result = memberService.checkId(request);
         // then
         assertThat(result).isFalse();
     }
 
-    @Transactional
     @Test
-    void 이메일중복_확인_성공_케이스_사용가능아이디 () {
+    void 이메일_중복_체크_성공_사용_가능한_이메일 () {
         // given
-        Member member = new Member("test2", "test2", "test2", "test2");
-        memberRepository.save(member);
+        MemberDto.CheckEmailRequest request = generateCheckEmailRequest();
+        given(memberRepository.existsByEmail(request.getEmail())).willReturn(false);
         // when
-        MemberDto.CheckEmailRequest request = new MemberDto.CheckEmailRequest("newEmail");
         boolean result = memberService.checkEmail(request);
         // then
         assertThat(result).isTrue();
     }
 
-    @Transactional
     @Test
-    void 회원가입요청_성공 () {
+    void 이메일_중복_체크_성공_사용_불가능한_이메일 () {
         // given
-        TestMailService testMailService = new TestMailService(new JavaMailSenderImpl());
-        MemberDto.SignupRequest request = new MemberDto.SignupRequest("test2","test@test.com","test2","test2", "1234");
+        MemberDto.CheckEmailRequest request = generateCheckEmailRequest();
+        given(memberRepository.existsByEmail(request.getEmail())).willReturn(true);
+        // when
+        boolean result = memberService.checkEmail(request);
+        // then
+        assertThat(result).isFalse();
+    }
 
+    @Test
+    void 닉네임_중복_체크_성공_사용_가능한_닉네임 () {
+        // given
+        String nickName = "test";
+        given(memberRepository.existsByNickName(nickName)).willReturn(true);
+        // when
+        boolean result = memberService.checkNickName(nickName);
+        // then
+        assertThat(result).isFalse();
+    }
+
+    @Test
+    void 닉네임_중복_체크_성공_사용_불가능한_닉네임 () {
+        // given
+        String nickName = "test";
+        given(memberRepository.existsByNickName(nickName)).willReturn(false);
+        // when
+        boolean result = memberService.checkNickName(nickName);
+        // then
+        assertThat(result).isTrue();
+    }
+
+    @Test
+    void 회원가입_요청_성공 () {
+        // given
+        MemberDto.SignupRequest request = generateSignupRequest();
+        given(memberRepository.existsByEmail(any())).willReturn(false);
+        given(memberRepository.existsById(any())).willReturn(false);
+        given(passwordEncoder.encode(any())).willReturn("test");
         // when
         Member member = memberService.sendSignupMail(request);
         // then
         assertThat(member.getId()).isEqualTo(request.getId());
-        assertThat(member.getName()).isEqualTo(request.getName());
-        assertThat(member.getEmail()).isEqualTo(request.getEmail());
-        assertThat(passwordEncoder.matches("1234", member.getPassword())).isTrue();
         assertThat(member.getNickName()).isEqualTo(request.getNickName());
+        assertThat(member.getEmail()).isEqualTo(request.getEmail());
     }
 
-    @Transactional
     @Test
-    void 회원가입요청_실패_중복된_이메일() {
-        //given
-        MemberDto.SignupRequest request = new MemberDto.SignupRequest("test2","test@test.com","test2","test2", "1234");
-        memberRepository.save(new Member("test2","test@test.com","1234","test2"));
-        //when
-        MemberException memberException = org.junit.jupiter.api.Assertions.assertThrows(MemberException.class,
-                () -> memberService.sendSignupMail(request));
-        //then
+    void 회원가입_요청_실패_중복된_이메일_에러 () {
+        // given
+        MemberDto.SignupRequest request = generateSignupRequest();
+        given(memberRepository.existsByEmail(any())).willReturn(true);
+        // when
+        MemberException memberException = assertThrows(MemberException.class, () -> memberService.sendSignupMail(request));
+        // then
         assertThat(memberException.getMemberErrorCode()).isEqualTo(MemberErrorCode.DUPLICATED_MEMBER_EMAIL);
     }
 
-    @Transactional
     @Test
-    void 회원가입요청_실패_중복된_아이디() {
-        //given
-        MemberDto.SignupRequest request = new MemberDto.SignupRequest("test2","test@test.com","test2","test2", "1234");
-        memberRepository.save(new Member("test2","asf@naver.com","1234","test2"));
-        //when
-        MemberException memberException = org.junit.jupiter.api.Assertions.assertThrows(MemberException.class,
-                () -> memberService.sendSignupMail(request));
-        //then
+    void 회원가입_요청_실패_중복된_아이디_에러 () {
+        // given
+        MemberDto.SignupRequest request = generateSignupRequest();
+        given(memberRepository.existsByEmail(any())).willReturn(false);
+        given(memberRepository.existsById(any())).willReturn(true);
+        // when
+        MemberException memberException = assertThrows(MemberException.class, () -> memberService.sendSignupMail(request));
+        // then
         assertThat(memberException.getMemberErrorCode()).isEqualTo(MemberErrorCode.DUPLICATED_MEMBER_ID);
     }
+
+    @Test
+    void 회원_가입_성공 () {
+        // given
+        Member redisMember = generateMember();
+        given(memberRedisService.get(any())).willReturn(Optional.of(redisMember));
+        // when
+        Member member = memberService.registerMember(any());
+        // then
+        assertThat(member.getId()).isEqualTo(redisMember.getId());
+        assertThat(member.getEmail()).isEqualTo(redisMember.getEmail());
+        assertThat(member.getNickName()).isEqualTo(redisMember.getNickName());
+    }
+
+    @Test
+    void 회원_가입_실패_타임아웃 () {
+        // given
+        given(memberRedisService.get(any())).willReturn(Optional.empty());
+        // when
+        MemberException memberException = assertThrows(MemberException.class, () -> memberService.registerMember(any()));
+        // then
+        assertThat(memberException.getMemberErrorCode()).isEqualTo(MemberErrorCode.SIGNUP_CONFIRM_TIMEOUT);
+    }
+
+    @Test
+    void 회원_정보_수정_성공_프로필_이미지_비밀번호_같이_변경 () {
+        // given
+        byte[] mockBinary = {1, 2, 4, 3, 5};
+        MockMultipartFile mockMultipartFile = generateMockMultipartFile(mockBinary);
+        MemberDto.UpdateRequest updateRequest = generateUpdateRequestPasswordChange();
+        given(memberRepository.findById(any())).willReturn(Optional.of(generateMember()));
+        given(passwordEncoder.encode(any())).willReturn("encoded");
+        given(awsS3Service.uploadFiles(any())).willReturn(List.of("test"));
+        // when
+        Member updatedMember = memberService.update(mockMultipartFile, updateRequest);
+        // then
+        assertThat(updatedMember.getPassword()).isEqualTo("encoded");
+        assertThat(updatedMember.getProfileImageUrl()).isEqualTo("test");
+        assertThat(updatedMember.getEmail()).isEqualTo(updateRequest.getEmail());
+        assertThat(updatedMember.getNickName()).isEqualTo(updateRequest.getNickName());
+        assertThat(updatedMember.getId()).isEqualTo(updateRequest.getId());
+    }
+
+    @Test
+    void 회원_정보_수정_성공_프로필_이미지_변경_비밀번호_미변경 () {
+        // given
+        byte[] mockBinary = {1, 2, 4, 3, 5};
+        MockMultipartFile mockMultipartFile = generateMockMultipartFile(mockBinary);
+        MemberDto.UpdateRequest updateRequest = generateUpdateRequestPasswordEmpty();
+        Member member = generateMember();
+        given(memberRepository.findById(any())).willReturn(Optional.of(member));
+        given(awsS3Service.uploadFiles(any())).willReturn(List.of("test"));
+        // when
+        Member updatedMember = memberService.update(mockMultipartFile, updateRequest);
+        // then
+        assertThat(updatedMember.getPassword()).isEqualTo(member.getPassword());
+        assertThat(updatedMember.getProfileImageUrl()).isEqualTo("test");
+        assertThat(updatedMember.getEmail()).isEqualTo(updateRequest.getEmail());
+        assertThat(updatedMember.getNickName()).isEqualTo(updateRequest.getNickName());
+        assertThat(updatedMember.getId()).isEqualTo(updateRequest.getId());
+    }
+
+    @Test
+    void 회원_정보_수정_성공_프로필_이미지_미변경_비밀번호_변경 () {
+        // given
+        byte[] mockBinary = new byte[0];
+        MockMultipartFile mockMultipartFile = generateMockMultipartFile(mockBinary);
+        MemberDto.UpdateRequest updateRequest = generateUpdateRequestPasswordChange();
+        Member member = generateMember();
+        given(memberRepository.findById(any())).willReturn(Optional.of(member));
+        given(passwordEncoder.encode(any())).willReturn("encoded");
+        // when
+        Member updatedMember = memberService.update(mockMultipartFile, updateRequest);
+        // then
+        assertThat(updatedMember.getPassword()).isEqualTo("encoded");
+        assertThat(updatedMember.getProfileImageUrl()).isEqualTo(member.getProfileImageUrl());
+        assertThat(updatedMember.getEmail()).isEqualTo(updateRequest.getEmail());
+        assertThat(updatedMember.getNickName()).isEqualTo(updateRequest.getNickName());
+        assertThat(updatedMember.getId()).isEqualTo(updateRequest.getId());
+    }
+
+    @Test
+    void 회원_정보_수정_성공_프로필_이미지_미변경_비밀번호_미변경 () {
+        // given
+        byte[] mockBinary = new byte[0];
+        MockMultipartFile mockMultipartFile = generateMockMultipartFile(mockBinary);
+        MemberDto.UpdateRequest updateRequest = generateUpdateRequestPasswordEmpty();
+        Member member = generateMember();
+        given(memberRepository.findById(any())).willReturn(Optional.of(member));
+        // when
+        Member updatedMember = memberService.update(mockMultipartFile, updateRequest);
+        // then
+        assertThat(updatedMember.getPassword()).isEqualTo(member.getPassword());
+        assertThat(updatedMember.getProfileImageUrl()).isEqualTo(member.getProfileImageUrl());
+        assertThat(updatedMember.getEmail()).isEqualTo(updateRequest.getEmail());
+        assertThat(updatedMember.getNickName()).isEqualTo(updateRequest.getNickName());
+        assertThat(updatedMember.getId()).isEqualTo(updateRequest.getId());
+    }
+
+    @Test
+    void 회원_정보_수정_실패_찾을수_없는_회원 () {
+        // given
+        byte[] mockBinary = new byte[0];
+        MockMultipartFile mockMultipartFile = generateMockMultipartFile(mockBinary);
+        MemberDto.UpdateRequest updateRequest = generateUpdateRequestPasswordEmpty();
+        Member member = generateMember();
+        given(memberRepository.findById(any())).willReturn(Optional.empty());
+        // when
+        MemberException memberException = assertThrows(MemberException.class, () -> memberService.update(mockMultipartFile, updateRequest));
+        // then
+        assertThat(memberException.getMemberErrorCode()).isEqualTo(MemberErrorCode.MEMBER_NOT_FOUND);
+    }
+
 
 }

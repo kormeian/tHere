@@ -18,7 +18,6 @@ import lombok.extern.slf4j.Slf4j;
 import onde.there.domain.Journey;
 import onde.there.domain.JourneyTheme;
 import onde.there.domain.Member;
-import onde.there.domain.Place;
 import onde.there.domain.type.JourneyThemeType;
 import onde.there.dto.journy.JourneyDto;
 import onde.there.dto.journy.JourneyDto.DetailResponse;
@@ -36,6 +35,7 @@ import onde.there.journey.repository.JourneyRepository;
 import onde.there.journey.repository.JourneyThemeRepository;
 import onde.there.member.repository.MemberRepository;
 import onde.there.place.repository.PlaceRepository;
+import onde.there.utils.RedisServiceForSoftDelete;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -53,6 +53,7 @@ public class JourneyService {
 	private final AwsS3Service awsS3Service;
 	private final PlaceRepository placeRepository;
 	private final JourneyBookmarkRepositoryCustom bookmarkRepositoryCustom;
+	private final RedisServiceForSoftDelete<Long> redisService;
 
 	@Transactional
 	public JourneyDto.CreateResponse createJourney(
@@ -285,11 +286,20 @@ public class JourneyService {
 			throw new JourneyException(YOU_ARE_NOT_THE_AUTHOR);
 		}
 
-		journey.setDelete(true);
+		journeySoftDeleteAndRedisUpload(journey);
 
 		log.info("deleteJourney() : 여정 삭제 완료, journeyId : " + journey.getId());
 		log.info("deleteJourney() : 종료");
 
+	}
+
+	private void journeySoftDeleteAndRedisUpload(Journey journey) {
+		log.info("journeySoftDeleteAndRedisUpload : 여정 소프트 딜리트 시작! (여정 아이디 : " + journey.getId() + ")");
+		journey.setDelete(true);
+		log.info("journeySoftDeleteAndRedisUpload : 여정 소프트 딜리트 완료!(여정 아이디 : " + journey.getId() + ")");
+		log.info("journeySoftDeleteAndRedisUpload : 여정 id redis upload 시작! (여정 아이디 : " + journey.getId() + ")");
+		redisService.setPlaceId("placeId", journey.getId());
+		log.info("journeySoftDeleteAndRedisUpload : 여정 id redis upload 종료! (여정 아이디 : " + journey.getId() + ")");
 	}
 
 	@Transactional

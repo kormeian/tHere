@@ -1,4 +1,4 @@
-package onde.there.place.utils;
+package onde.there.utils;
 
 
 import java.util.ArrayList;
@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 
 @RequiredArgsConstructor
 @Service
-public class RedisServiceForPlace<T> {
+public class RedisServiceForSoftDelete<T> {
 
 	private final RedisTemplate<String, T> redisTemplate;
 

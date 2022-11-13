@@ -17,7 +17,7 @@ import onde.there.place.exception.PlaceException;
 import onde.there.place.repository.PlaceImageRepository;
 import onde.there.place.repository.PlaceRepository;
 import onde.there.place.repository.PlaceRepositoryCustomImpl;
-import onde.there.place.utils.RedisServiceForPlace;
+import onde.there.utils.RedisServiceForSoftDelete;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -31,7 +31,7 @@ public class PlaceService {
 	private final JourneyRepository journeyRepository;
 	private final PlaceRepository placeRepository;
 	private final PlaceImageRepository placeImageRepository;
-	private final RedisServiceForPlace<Long> redisService;
+	private final RedisServiceForSoftDelete<Long> redisService;
 	private final PlaceRepositoryCustomImpl placeRepositoryCustom;
 	private final AwsS3Service awsS3Service;
 

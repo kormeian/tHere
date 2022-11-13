@@ -10,7 +10,7 @@ import onde.there.place.exception.PlaceErrorCode;
 import onde.there.place.exception.PlaceException;
 import onde.there.place.repository.PlaceHeartRepository;
 import onde.there.place.repository.PlaceRepository;
-import onde.there.place.utils.RedisServiceForPlace;
+import onde.there.utils.RedisServiceForSoftDelete;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -21,7 +21,7 @@ public class PlaceHeartService {
 	private final PlaceHeartRepository placeHeartRepository;
 	private final PlaceRepository placeRepository;
 	private final MemberRepository memberRepository;
-	private final RedisServiceForPlace<Long> redisService;
+	private final RedisServiceForSoftDelete<Long> redisService;
 	private static final String PLACE_ID_KEY = "placeHeartSchedulingPlaceId";
 
 	public boolean heart(Long placeId, String memberId) {

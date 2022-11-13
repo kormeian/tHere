@@ -29,7 +29,6 @@ import onde.there.dto.place.PlaceDto.Response;
 import onde.there.dto.place.PlaceDto.UpdateRequest;
 import onde.there.image.service.AwsS3Service;
 import onde.there.journey.repository.JourneyRepository;
-import onde.there.member.repository.MemberRepository;
 import onde.there.place.exception.PlaceErrorCode;
 import onde.there.place.exception.PlaceException;
 import onde.there.place.repository.PlaceHeartRepository;
@@ -37,7 +36,7 @@ import onde.there.place.repository.PlaceImageRepository;
 import onde.there.place.repository.PlaceRepository;
 import onde.there.place.repository.PlaceRepositoryCustomImpl;
 import onde.there.place.service.PlaceService;
-import onde.there.place.utils.RedisServiceForPlace;
+import onde.there.utils.RedisServiceForSoftDelete;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -73,7 +72,7 @@ class PlaceServiceTest {
 	private CommentRepository commentRepository;
 
 	@Mock
-	private RedisServiceForPlace<Long> redisService;
+	private RedisServiceForSoftDelete<Long> redisService;
 
 	@Mock
 	private AwsS3Service awsS3Service;

@@ -11,7 +11,7 @@ import onde.there.domain.Place;
 import onde.there.place.repository.PlaceHeartRepository;
 import onde.there.place.repository.PlaceRepository;
 import onde.there.place.service.PlaceHeartSchedulingService;
-import onde.there.place.utils.RedisServiceForPlace;
+import onde.there.utils.RedisServiceForSoftDelete;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,7 +29,7 @@ class PlaceHeartSchedulingServiceTest {
 	private PlaceRepository placeRepository;
 
 	@Mock
-	private RedisServiceForPlace<Long> redisService;
+	private RedisServiceForSoftDelete<Long> redisService;
 
 	@InjectMocks
 	private PlaceHeartSchedulingService placeHeartSchedulingService;

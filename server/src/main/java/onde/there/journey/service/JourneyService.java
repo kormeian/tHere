@@ -86,7 +86,7 @@ public class JourneyService {
 			.introductionText(request.getIntroductionText())
 			.numberOfPeople(request.getNumberOfPeople())
 			.region(findByRegion(request.getRegion()))
-			.delete(false)
+			.deleted(false)
 			.build();
 
 		journeyRepository.save(journey);
@@ -295,10 +295,10 @@ public class JourneyService {
 
 	private void journeySoftDeleteAndRedisUpload(Journey journey) {
 		log.info("journeySoftDeleteAndRedisUpload : 여정 소프트 딜리트 시작! (여정 아이디 : " + journey.getId() + ")");
-		journey.setDelete(true);
+		journey.setDeleted(true);
 		log.info("journeySoftDeleteAndRedisUpload : 여정 소프트 딜리트 완료!(여정 아이디 : " + journey.getId() + ")");
 		log.info("journeySoftDeleteAndRedisUpload : 여정 id redis upload 시작! (여정 아이디 : " + journey.getId() + ")");
-		redisService.setPlaceId("placeId", journey.getId());
+		redisService.setPlaceId("journeyId", journey.getId());
 		log.info("journeySoftDeleteAndRedisUpload : 여정 id redis upload 종료! (여정 아이디 : " + journey.getId() + ")");
 	}
 

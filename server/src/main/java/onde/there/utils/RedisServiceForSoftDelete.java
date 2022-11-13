@@ -17,7 +17,7 @@ public class RedisServiceForSoftDelete<T> {
 
 	public void setPlaceId(String key, T placeId) {
 		redisTemplate.setValueSerializer(new Jackson2JsonRedisSerializer<>(placeId.getClass()));
-		redisTemplate.opsForSet().add(key, placeId);
+		redisTemplate.opsForList().rightPush(key, placeId);
 	}
 
 	public List<T> get(String key) {

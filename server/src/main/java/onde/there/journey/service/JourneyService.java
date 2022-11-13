@@ -85,6 +85,7 @@ public class JourneyService {
 			.introductionText(request.getIntroductionText())
 			.numberOfPeople(request.getNumberOfPeople())
 			.region(findByRegion(request.getRegion()))
+			.delete(false)
 			.build();
 
 		journeyRepository.save(journey);
@@ -284,15 +285,7 @@ public class JourneyService {
 			throw new JourneyException(YOU_ARE_NOT_THE_AUTHOR);
 		}
 
-		List<JourneyTheme> journeyThemeTypeList = journeyThemeRepository
-			.findAllByJourneyId(journey.getId());
-
-		List<Place> list = placeRepository.findAllByJourney(journey);
-
-		placeRepository.deleteAll(list);
-		awsS3Service.deleteFile(journey.getJourneyThumbnailUrl());
-		journeyThemeRepository.deleteAll(journeyThemeTypeList);
-		journeyRepository.delete(journey);
+		journey.setDelete(true);
 
 		log.info("deleteJourney() : 여정 삭제 완료, journeyId : " + journey.getId());
 		log.info("deleteJourney() : 종료");
@@ -303,7 +296,7 @@ public class JourneyService {
 	public UpdateResponse updateJourney(UpdateRequest request,
 		MultipartFile thumbnail, String memberId) {
 
-		log.info("updateJourney() : 호출");
+		log.info("updateJourney() : 호출" + thumbnail);
 
 		verifyJwt(memberId);
 		Journey journey = journeyRepository.findById(request.getJourneyId())
@@ -329,13 +322,9 @@ public class JourneyService {
 		}
 		log.info("updateJourney() : journeyTheme 수정 완료");
 
-		if (thumbnail != null) {
-			awsS3Service.deleteFile(journey.getJourneyThumbnailUrl());
-			List<String> imageUrls = awsS3Service.uploadFiles(
-				Collections.singletonList(thumbnail));
-			journey.setJourneyThumbnailUrl(imageUrls.get(0));
-		}
 
+		String imageUrl = updateThumbnailUrl(thumbnail, journey);
+		journey.setJourneyThumbnailUrl(imageUrl);
 		journey.setTitle(request.getTitle());
 		journey.setStartDate(request.getStartDate());
 		journey.setEndDate(request.getEndDate());
@@ -369,5 +358,10 @@ public class JourneyService {
 		if (memberId == null) {
 			throw new JourneyException(AVAILABLE_AFTER_LONGIN);
 		}
+	}
+
+	private String updateThumbnailUrl(MultipartFile multipartFile, Journey journey) {
+		boolean condition = multipartFile == null || multipartFile.isEmpty();
+		return condition ? journey.getJourneyThumbnailUrl() : awsS3Service.uploadFiles(List.of(multipartFile)).get(0);
 	}
 }

@@ -73,7 +73,6 @@
 //		//when
 //		CreateResponse journeyDto = journeyService.createJourney(
 //			CreateRequest.builder()
-//				.memberId("tHereId")
 //				.title("TitleTest")
 //				.startDate(LocalDate.parse("2022-10-16"))
 //				.endDate(LocalDate.parse("2022-10-17"))
@@ -116,7 +115,6 @@
 //		JourneyException exception = assertThrows(JourneyException.class,
 //			() -> journeyService.createJourney(
 //				CreateRequest.builder()
-//					.memberId("tHereId")
 //					.title("TitleTest")
 //					.startDate(LocalDate.parse("2022-10-16"))
 //					.endDate(LocalDate.parse("2022-10-15"))
@@ -151,7 +149,6 @@
 //		JourneyException exception = assertThrows(JourneyException.class,
 //			() -> journeyService.createJourney(
 //				JourneyDto.CreateRequest.builder()
-//					.memberId("tHereId")
 //					.title("TitleTest")
 //					.startDate(LocalDate.parse("2022-10-16"))
 //					.endDate(LocalDate.parse("2022-10-17"))
@@ -224,7 +221,7 @@
 //
 //		//when
 //		Page<Journey> result = journeyRepository
-//			.myList("tHereId", pageable);
+//			.journeyListByMemberId("tHereId", pageable);
 //
 //		//then
 //		assertThat(result.getSize()).isEqualTo(2);

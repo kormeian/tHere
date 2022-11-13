@@ -1,10 +1,10 @@
 package onde.there.member;
 
-import io.jsonwebtoken.Jwt;
 import onde.there.domain.Member;
 import onde.there.dto.member.AuthDto;
 import onde.there.member.exception.MemberException;
 import onde.there.member.exception.type.MemberErrorCode;
+import onde.there.member.security.jwt.JwtConfig;
 import onde.there.member.security.jwt.JwtService;
 import onde.there.member.type.TokenType;
 import org.junit.jupiter.api.Test;
@@ -22,7 +22,12 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @ExtendWith(SpringExtension.class)
 public class JwtServiceTest {
 
-    JwtService jwtService = new JwtService("test");
+    private static final String secretKey = "test";
+    private static final String BEARER_TYPE = "Bearer";
+    private static final long ACCESS_TOKEN_EXPIRE_TIME =  24 * 60 * 60 * 1000L;        // 1시간
+    private static final long REFRESH_TOKEN_EXPIRE_TIME = 7 * 24 * 60 * 60 * 1000L;   // 7일
+
+    JwtService jwtService = new JwtService(new JwtConfig(secretKey, BEARER_TYPE, ACCESS_TOKEN_EXPIRE_TIME, REFRESH_TOKEN_EXPIRE_TIME));
 
     @WithMockUser
     @Test

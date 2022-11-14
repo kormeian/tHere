@@ -66,7 +66,7 @@ public class JourneyController {
 			content = @Content(schema = @Schema(implementation = JourneyDto.UpdateRequest.class)))
 		@RequestPart @Valid JourneyDto.UpdateRequest request,
 		@Parameter(description = "Thumbnail 이미지 파일", required = false)
-		@RequestPart MultipartFile thumbnail,
+		@RequestPart(required = false) MultipartFile thumbnail,
 		@TokenMemberId String memberId) {
 
 		return ResponseEntity.ok(

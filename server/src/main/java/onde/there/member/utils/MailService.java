@@ -19,7 +19,7 @@ public class MailService {
     public void sendSignupMail(String uuid, Member member) {
         String subject = "[tHere] 회원 가입 인증 메일입니다!";
         String text = "<h1>[이메일 인증]</h1> <p>아래 링크를 클릭하시면 이메일 인증이 완료됩니다.</p> " +
-                "<a href='http://localhost:8080/members/signup/confirm?key="+uuid+"' target='_blenk'>이메일 인증 확인</a>";
+                "<a href='http://ec2-3-34-2-239.ap-northeast-2.compute.amazonaws.com:8080/members/signup/confirm?key="+uuid+"' target='_blenk'>이메일 인증 확인</a>";
 
         MimeMessagePreparator mail = (mimeMessage) -> {
             MimeMessageHelper mimeMessageHelper = new MimeMessageHelper(mimeMessage, true, "UTF-8");

@@ -38,6 +38,7 @@ import onde.there.member.repository.MemberRepository;
 import onde.there.place.repository.PlaceRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -122,8 +123,8 @@ public class JourneyService {
 	}
 
 	@Transactional
-	public Page<JourneyDto.MyListResponse> myList(
-		String memberId, Pageable pageable) {
+	public Slice<JourneyDto.MyListResponse> myList(
+		String memberId, Pageable pageable,  Long cursorId) {
 
 		log.info("myList() : 호출");
 
@@ -131,8 +132,8 @@ public class JourneyService {
 		Member member = memberRepository.findById(memberId)
 			.orElseThrow(() -> new JourneyException(NOT_FOUND_MEMBER));
 
-		Page<Journey> journeys = journeyRepository.journeyListByMemberId(
-			memberId, pageable);
+		Slice<Journey> journeys = journeyRepository.journeyListByMemberId(
+			memberId, pageable, cursorId);
 
 		log.info("myList() : 조회 완료");
 
@@ -142,20 +143,20 @@ public class JourneyService {
 	}
 
 	@Transactional
-	public Page<JourneyDto.NickNameListResponse> nickNameList(
-		String nickname, Pageable pageable, String memberId) {
+	public Slice<JourneyDto.NickNameListResponse> nickNameList(
+		String nickname, Pageable pageable, String memberId, Long cursorId) {
 
 		log.info("myList() : 호출");
 
 		Member member = memberRepository.findByNickName(nickname)
 			.orElseThrow(() -> new JourneyException(NOT_FOUND_MEMBER));
 
-		Page<Journey> journeys = journeyRepository.journeyListByMemberId(
-			member.getId(), pageable);
+		Slice<Journey> journeys = journeyRepository.journeyListByMemberId(
+			member.getId(), pageable, cursorId);
 
 		List<Journey> journeyList = journeys.getContent();
 
-		Page<NickNameListResponse> nickNameListResponses = journeys.map(
+		Slice<NickNameListResponse> nickNameListResponses = journeys.map(
 			NickNameListResponse::fromEntity
 		);
 
@@ -180,17 +181,17 @@ public class JourneyService {
 	}
 
 	@Transactional
-	public Page<FilteringResponse> filteredList(
+	public Slice<FilteringResponse> filteredList(
 		FilteringRequest filteringRequest, Pageable pageable,
-		String memberId) {
+		String memberId, Long cursorId) {
 
 		log.info("filteredList() : 호출");
 
-		Page<Journey> journeys = journeyRepository.searchAll(filteringRequest,
-			pageable);
+		Slice<Journey> journeys = journeyRepository.searchAll(filteringRequest,
+			pageable, cursorId);
 
 		List<Journey> journeyList = journeys.getContent();
-		Page<FilteringResponse> filteringResponses = journeys.map(
+		Slice<FilteringResponse> filteringResponses = journeys.map(
 			FilteringResponse::fromEntity);
 
 		if (memberId == null) {

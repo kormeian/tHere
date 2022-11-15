@@ -319,7 +319,7 @@ public class JourneyServiceTest {
 
 		//when
 		JourneyException exception = assertThrows(JourneyException.class,
-			() -> journeyService.myList("test", pageable, 0L));
+			() -> journeyService.myList("test", pageable));
 
 		//then
 		assertEquals(JourneyErrorCode.NOT_FOUND_MEMBER,

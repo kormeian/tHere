@@ -30,7 +30,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Slice;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.transaction.annotation.Transactional;
@@ -221,8 +220,8 @@ public class JourneyServiceTest2 {
 		PageRequest pageable = PageRequest.of(0, 2);
 
 		//when
-		Slice<Journey> result = journeyRepository
-			.journeyListByMemberId("tHereId", pageable, 0L);
+		Page<Journey> result = journeyRepository
+			.journeyListByMemberId("tHereId", pageable);
 
 		//then
 		assertThat(result.getSize()).isEqualTo(2);

@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import onde.there.comment.repository.CommentRepository;
 import onde.there.domain.Journey;
 import onde.there.domain.Place;
 import onde.there.domain.PlaceImage;
@@ -15,10 +14,10 @@ import onde.there.image.service.AwsS3Service;
 import onde.there.journey.repository.JourneyRepository;
 import onde.there.place.exception.PlaceErrorCode;
 import onde.there.place.exception.PlaceException;
-import onde.there.place.repository.PlaceHeartRepository;
 import onde.there.place.repository.PlaceImageRepository;
 import onde.there.place.repository.PlaceRepository;
 import onde.there.place.repository.PlaceRepositoryCustomImpl;
+import onde.there.utils.RedisServiceForSoftDelete;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -32,8 +31,7 @@ public class PlaceService {
 	private final JourneyRepository journeyRepository;
 	private final PlaceRepository placeRepository;
 	private final PlaceImageRepository placeImageRepository;
-	private final PlaceHeartRepository placeHeartRepository;
-	private final CommentRepository commentRepository;
+	private final RedisServiceForSoftDelete<Long> redisService;
 	private final PlaceRepositoryCustomImpl placeRepositoryCustom;
 	private final AwsS3Service awsS3Service;
 
@@ -67,6 +65,7 @@ public class PlaceService {
 		log.info("getPlace : 장소 조회 시작! (장소 아이디 : " + placeId + ")");
 
 		Place place = checkPlace(placeId);
+		checkDeleted(place);
 		Response response = Response.toResponse(place);
 
 		log.info("getPlace : 장소 조회 완료! (장소 아이디 : " + placeId + ")");
@@ -78,7 +77,8 @@ public class PlaceService {
 		checkJourney(journeyId);
 
 		if (memberId == null) {
-			List<Place> places = placeRepository.findAllByJourneyIdOrderByPlaceTimeAsc(journeyId);
+			List<Place> places = placeRepository.findAllByJourneyIdAndDeletedOrderByPlaceTimeAsc(
+				journeyId, false);
 			return Response.toResponse(places);
 		}
 
@@ -96,9 +96,7 @@ public class PlaceService {
 
 		checkAuthorization(memberId, place.getJourney());
 
-		deleteAllWithPlaceRelations(placeId);
-
-		placeRepository.delete(place);
+		placeSoftDeleteAndRedisUpload(place);
 		log.info("delete : 장소 삭제 완료! (장소 아이디 : " + placeId + ")");
 		return true;
 	}
@@ -117,10 +115,9 @@ public class PlaceService {
 		}
 
 		for (Place place : places) {
-			deleteAllWithPlaceRelations(place.getId());
+			placeSoftDeleteAndRedisUpload(place);
 		}
 
-		placeRepository.deleteAll(places);
 		log.info("deleteAll : 여정에 포함된 장소 삭제 완료! (여정 아이디 : " + journeyId + ")");
 		return true;
 	}
@@ -130,7 +127,7 @@ public class PlaceService {
 		String memberId) {
 		log.info("updatePlace : 장소 업데이트 시작! (장소 아이디 : " + request.getPlaceId() + ")");
 		Place savedPlace = checkPlace(request.getPlaceId());
-
+		checkDeleted(savedPlace);
 		checkAuthorization(memberId, savedPlace.getJourney());
 
 		log.info("장소에 이미지 제외한 값 업데이트 시작! (장소 아이디 : " + request.getPlaceId() + ")");
@@ -148,26 +145,6 @@ public class PlaceService {
 
 		log.info("updatePlace : 장소 업데이트 완료! (장소 아이디 : " + request.getPlaceId() + ")");
 		return response;
-	}
-
-	private void deleteAllWithPlaceRelations(Long placeId) {
-		log.info("deleteAllWithPlaceRelations : 장소 연관관계 삭제 삭제 시작! (장소 아이디 : " + placeId + ")");
-		deletePlaceImagesInPlace(placeId);
-		deletePlaceCommentInPlace(placeId);
-		deletePlaceHeartInPlace(placeId);
-		log.info("deleteAllWithPlaceRelations : 장소 연관관계 삭제 삭제 완료! (장소 아이디 : " + placeId + ")");
-	}
-
-	private void deletePlaceHeartInPlace(Long placeId) {
-		log.info("deletePlaceHeartInPlace : 장소 좋아요 삭제 삭제 시작! (장소 아이디 : " + placeId + ")");
-		placeHeartRepository.deleteAll(placeHeartRepository.findAllByPlaceId(placeId));
-		log.info("deletePlaceHeartInPlace : 장소 좋아요 삭제 삭제 완료! (장소 아이디 : " + placeId + ")");
-	}
-
-	private void deletePlaceCommentInPlace(Long placeId) {
-		log.info("deletePlaceCommentInPlace : 장소 댓글 삭제 삭제 시작! (장소 아이디 : " + placeId + ")");
-		commentRepository.deleteAll(commentRepository.findAllByPlaceId(placeId));
-		log.info("deletePlaceCommentInPlace : 장소 댓글 삭제 삭제 완료! (장소 아이디 : " + placeId + ")");
 	}
 
 	private void deletePlaceImagesInPlace(Long placeId) {
@@ -208,5 +185,20 @@ public class PlaceService {
 		if (!journey.getMember().getId().equals(memberId)) {
 			throw new PlaceException(PlaceErrorCode.MISMATCH_MEMBER_ID);
 		}
+	}
+
+	private static void checkDeleted(Place place) {
+		if (place.isDeleted()) {
+			throw new PlaceException(PlaceErrorCode.IS_DELETED_PLACE);
+		}
+	}
+
+	private void placeSoftDeleteAndRedisUpload(Place place) {
+		log.info("placeSoftDeleteAndRedisUpload : 장소 소프트 딜리트 시작! (장소 아이디 : " + place.getId() + ")");
+		place.setDeleted(true);
+		log.info("placeSoftDeleteAndRedisUpload : 장소 소프트 딜리트 완료!(장소 아이디 : " + place.getId() + ")");
+		log.info("placeSoftDeleteAndRedisUpload : 장소 id redis upload 시작! (장소 아이디 : " + place.getId() + ")");
+		redisService.setPlaceId("placeId", place.getId());
+		log.info("placeSoftDeleteAndRedisUpload : 장소 id redis upload 종료! (장소 아이디 : " + place.getId() + ")");
 	}
 }

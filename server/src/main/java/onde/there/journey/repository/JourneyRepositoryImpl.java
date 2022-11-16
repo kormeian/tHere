@@ -41,7 +41,7 @@ public class JourneyRepositoryImpl implements JourneyRepositoryCustom {
 			.fetchJoin()
 			.where(
 				journey.disclosure.eq("public"),
-				journey.delete.eq(false),
+				journey.deleted.eq(false),
 				filteredRegion,
 				filteredTheme,
 				eqTitle(filteringRequest.getKeyword())
@@ -57,7 +57,7 @@ public class JourneyRepositoryImpl implements JourneyRepositoryCustom {
 			.innerJoin(journey.journeyThemes, journeyTheme)
 			.where(
 				journey.disclosure.eq("public"),
-				journey.delete.eq(false),
+				journey.deleted.eq(false),
 				filteredRegion,
 				filteredTheme,
 				eqTitle(filteringRequest.getKeyword()));
@@ -75,7 +75,7 @@ public class JourneyRepositoryImpl implements JourneyRepositoryCustom {
 			.innerJoin(journey.member, member)
 			.fetchJoin()
 			.where(eqMemberId(memberId),
-				journey.delete.eq(false))
+				journey.deleted.eq(false))
 			.groupBy(journey)
 			.offset(pageable.getOffset())
 			.limit(pageable.getPageSize())

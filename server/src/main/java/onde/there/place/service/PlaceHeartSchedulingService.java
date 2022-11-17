@@ -20,10 +20,10 @@ public class PlaceHeartSchedulingService {
 	private final PlaceHeartRepository placeHeartRepository;
 	private final PlaceRepository placeRepository;
 
-	private final RedisServiceForSoftDelete<Long> redisService;
-	private static final String PLACE_ID_KEY = "placeId";
+	private final RedisServiceForPlaceHeart<Long> redisService;
+	private static final String PLACE_ID_KEY = "placeHeartChangedId";
 
-	@Scheduled(cron = "0 0 3 * * *")
+	@Scheduled(cron = " 0 0 3 * * *")
 	@Transactional
 	public void culPlaceHeartCount() {
 		log.info("culPlaceHeartSum : 저장된 모든 장소 스케줄링 시작!");

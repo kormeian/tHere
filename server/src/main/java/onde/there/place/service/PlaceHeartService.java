@@ -23,7 +23,7 @@ public class PlaceHeartService {
 	private final PlaceRepository placeRepository;
 	private final MemberRepository memberRepository;
 	private final RedisServiceForPlaceHeart<Long> redisService;
-	private static final String PLACE_ID_KEY = "placeId";
+	private static final String PLACE_ID_KEY = "placeHeartChangedId";
 
 	public boolean heart(Long placeId, String memberId) {
 		boolean heart = true;

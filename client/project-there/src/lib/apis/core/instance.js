@@ -27,9 +27,7 @@ customAxios.interceptors.request.use((config) => {
 });
 
 customAxios.interceptors.response.use(
-  (response) =>
-    // console.log(response);
-    response,
+  (response) => response,
   async (error) => {
     // res에서 err가 발생했을 경우 catch로 넘어가기 전에 처리하는 부분
     const { errorCode } = error.response.data;

@@ -10,7 +10,7 @@ import customAxios from './core/instance';
 
 // 반환값 : 로그인한 회원 이름
 export const authAPI = async (accessToken) => {
-  if (accessToken === null || accessToken === 'undefined') return;
+  if (!accessToken || accessToken === 'undefined') return;
 
   try {
     const { data } = await customAxios.get('/members/auth');

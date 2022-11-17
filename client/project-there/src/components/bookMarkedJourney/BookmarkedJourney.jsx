@@ -4,9 +4,11 @@ import { useInView } from 'react-intersection-observer';
 import DotLoader from 'react-spinners/DotLoader';
 import { useJourneyListActions } from '../../contexts/JourneyListContext';
 import JourneyList from '../main/JourneyList';
+import { useAuthValue } from '../../contexts/AuthContext';
+import { ReactComponent as BookmarkSVG } from '../../assets/icons/bookmark.svg';
 
 const Wrapper = styled.div`
-  padding-top: 240px;
+  padding-top: 190px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -16,8 +18,33 @@ const Observer = styled.div`
   margin-top: 60px;
 `;
 
+const TitleBox = styled.div`
+  margin-bottom: 100px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 984px;
+  padding: 22px 0;
+  border-bottom: 0.5px solid var(--color-gray300);
+  color: var(--color-green200);
+
+  & span:first-child {
+    font-size: var(--font-regular);
+    font-weight: var(--weight-semi-bold);
+    color: var(--color-green300);
+    margin-right: 4px;
+  }
+`;
+
+const BookmarkIcon = styled(BookmarkSVG)`
+  width: 60px;
+  height: 60px;
+  margin-bottom: 18px;
+`;
+
 function BookmarkedJourney({ memberId }) {
   const { initDatas, loadBookmarkedItems } = useJourneyListActions();
+  const { nickName } = useAuthValue();
 
   // 무한 스크롤
   const [page, setPage] = useState(0);
@@ -53,6 +80,10 @@ function BookmarkedJourney({ memberId }) {
 
   return (
     <Wrapper>
+      <TitleBox>
+        <span>{nickName}</span>
+        <span>님의 북마크</span>
+      </TitleBox>
       <JourneyList page="bookmark" />
       {observer && (
         <Observer ref={ref}>

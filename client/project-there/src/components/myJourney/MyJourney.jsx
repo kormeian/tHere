@@ -4,9 +4,10 @@ import { useInView } from 'react-intersection-observer';
 import DotLoader from 'react-spinners/DotLoader';
 import { useJourneyListActions } from '../../contexts/JourneyListContext';
 import JourneyList from '../main/JourneyList';
+import ProfileBox from '../common/ProfileBox';
 
 const Wrapper = styled.div`
-  padding-top: 240px;
+  padding-top: 150px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -53,8 +54,8 @@ function MyJourney({ memberId }) {
 
   return (
     <Wrapper>
+      <ProfileBox />
       <JourneyList page="myJourney" />
-
       {observer && (
         <Observer ref={ref}>
           <DotLoader color="#51A863" size="30px" />

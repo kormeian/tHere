@@ -28,6 +28,7 @@ import onde.there.place.exception.PlaceException;
 import onde.there.place.repository.PlaceHeartRepository;
 import onde.there.place.repository.PlaceImageRepository;
 import onde.there.place.repository.PlaceRepository;
+import onde.there.utils.RedisServiceForSoftDelete;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,6 +61,11 @@ class PlaceServiceTest {
 
 	@Autowired
 	private AwsS3Service awsS3Service;
+
+	@Autowired
+	private RedisServiceForSoftDelete<Long> redisService;
+
+	private static final String PLACE_ID = "placeId";
 
 	@Test
 	void 장소_저장() throws IOException {
@@ -420,22 +426,12 @@ class PlaceServiceTest {
 				.build()))
 			.build());
 
-		List<Long> placeImageId = new ArrayList<>();
-		for (int i = 0; i < 3; i++) {
-			PlaceImage p = placeImageRepository.save(PlaceImage.builder()
-				.place(save)
-				.imageUrl("url")
-				.build());
-			placeImageId.add(p.getId());
-		}
-
 		//when
 		boolean delete = placeService.deletePlace(save.getId(), "memberId");
 		//then
-		assertTrue(delete);
-		for (Long aLong : placeImageId) {
-			assertFalse(placeImageRepository.existsById(aLong));
-		}
+		assertTrue(save.isDeleted());
+		assertEquals(redisService.get(PLACE_ID).get(0), save.getId());
+		redisService.delete(PLACE_ID);
 	}
 
 	@DisplayName("03_01. delete fail not found place")
@@ -495,39 +491,18 @@ class PlaceServiceTest {
 		Place save2 = placeRepository.save(Place.builder().journey(save).build());
 		Place save3 = placeRepository.save(Place.builder().journey(save).build());
 
-		List<Long> placeImageIdes = new ArrayList<>();
-
-		for (int i = 0; i < 3; i++) {
-			PlaceImage p1 = placeImageRepository.save(PlaceImage.builder()
-				.imageUrl("url")
-				.place(save1)
-				.build());
-
-			PlaceImage p2 = placeImageRepository.save(PlaceImage.builder()
-				.imageUrl("url")
-				.place(save2)
-				.build());
-
-			PlaceImage p3 = placeImageRepository.save(PlaceImage.builder()
-				.imageUrl("url")
-				.place(save3)
-				.build());
-			placeImageIdes.addAll(List.of(p1.getId(), p2.getId(), p3.getId()));
-		}
-
 		//when
 		boolean result = placeService.deleteAll(save.getId(), "memberId");
 
-		List<Boolean> placeImageDeletedCheck = new ArrayList<>();
-		for (Long placeImageIde : placeImageIdes) {
-			placeImageDeletedCheck.add(placeImageRepository.existsById(placeImageIde));
-		}
-
 		//then
 		assertTrue(result);
-		for (Boolean aBoolean : placeImageDeletedCheck) {
-			assertFalse(aBoolean);
-		}
+		assertTrue(save1.isDeleted());
+		assertEquals(redisService.get(PLACE_ID).get(0), save1.getId());
+		assertTrue(save2.isDeleted());
+		assertEquals(redisService.get(PLACE_ID).get(1), save2.getId());
+		assertTrue(save3.isDeleted());
+		assertEquals(redisService.get(PLACE_ID).get(2), save3.getId());
+		redisService.delete(PLACE_ID);
 	}
 
 	@DisplayName("04_01. deleteAll fail not deleted")

@@ -7,7 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import onde.there.domain.Place;
 import onde.there.place.repository.PlaceHeartRepository;
 import onde.there.place.repository.PlaceRepository;
-import onde.there.place.utils.RedisServiceForPlaceHeart;
+import onde.there.utils.RedisServiceForSoftDelete;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

@@ -67,6 +67,8 @@ public class Place {
 
 	private long placeHeartCount;
 
+	private boolean deleted;
+
 	@BatchSize(size = 11)
 	@OneToMany(mappedBy = "place")
 	private List<PlaceImage> placeImages = new ArrayList<>();

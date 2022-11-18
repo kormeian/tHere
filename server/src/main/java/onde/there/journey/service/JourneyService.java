@@ -18,7 +18,6 @@ import lombok.extern.slf4j.Slf4j;
 import onde.there.domain.Journey;
 import onde.there.domain.JourneyTheme;
 import onde.there.domain.Member;
-import onde.there.domain.Place;
 import onde.there.domain.type.JourneyThemeType;
 import onde.there.dto.journy.JourneyDto;
 import onde.there.dto.journy.JourneyDto.DetailResponse;
@@ -36,9 +35,9 @@ import onde.there.journey.repository.JourneyRepository;
 import onde.there.journey.repository.JourneyThemeRepository;
 import onde.there.member.repository.MemberRepository;
 import onde.there.place.repository.PlaceRepository;
+import onde.there.utils.RedisServiceForSoftDelete;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -54,6 +53,7 @@ public class JourneyService {
 	private final AwsS3Service awsS3Service;
 	private final PlaceRepository placeRepository;
 	private final JourneyBookmarkRepositoryCustom bookmarkRepositoryCustom;
+	private final RedisServiceForSoftDelete<Long> redisService;
 
 	@Transactional
 	public JourneyDto.CreateResponse createJourney(
@@ -86,6 +86,7 @@ public class JourneyService {
 			.introductionText(request.getIntroductionText())
 			.numberOfPeople(request.getNumberOfPeople())
 			.region(findByRegion(request.getRegion()))
+			.deleted(false)
 			.build();
 
 		journeyRepository.save(journey);
@@ -123,8 +124,8 @@ public class JourneyService {
 	}
 
 	@Transactional
-	public Slice<JourneyDto.MyListResponse> myList(
-		String memberId, Pageable pageable,  Long cursorId) {
+	public Page<JourneyDto.MyListResponse> myList(
+		String memberId, Pageable pageable) {
 
 		log.info("myList() : 호출");
 
@@ -132,8 +133,8 @@ public class JourneyService {
 		Member member = memberRepository.findById(memberId)
 			.orElseThrow(() -> new JourneyException(NOT_FOUND_MEMBER));
 
-		Slice<Journey> journeys = journeyRepository.journeyListByMemberId(
-			memberId, pageable, cursorId);
+		Page<Journey> journeys = journeyRepository.journeyListByMemberId(
+			memberId, pageable);
 
 		log.info("myList() : 조회 완료");
 
@@ -143,20 +144,20 @@ public class JourneyService {
 	}
 
 	@Transactional
-	public Slice<JourneyDto.NickNameListResponse> nickNameList(
-		String nickname, Pageable pageable, String memberId, Long cursorId) {
+	public Page<JourneyDto.NickNameListResponse> nickNameList(
+		String nickname, Pageable pageable, String memberId) {
 
 		log.info("myList() : 호출");
 
 		Member member = memberRepository.findByNickName(nickname)
 			.orElseThrow(() -> new JourneyException(NOT_FOUND_MEMBER));
 
-		Slice<Journey> journeys = journeyRepository.journeyListByMemberId(
-			member.getId(), pageable, cursorId);
+		Page<Journey> journeys = journeyRepository.journeyListByMemberId(
+			member.getId(), pageable);
 
 		List<Journey> journeyList = journeys.getContent();
 
-		Slice<NickNameListResponse> nickNameListResponses = journeys.map(
+		Page<NickNameListResponse> nickNameListResponses = journeys.map(
 			NickNameListResponse::fromEntity
 		);
 
@@ -181,17 +182,17 @@ public class JourneyService {
 	}
 
 	@Transactional
-	public Slice<FilteringResponse> filteredList(
+	public Page<FilteringResponse> filteredList(
 		FilteringRequest filteringRequest, Pageable pageable,
-		String memberId, Long cursorId) {
+		String memberId) {
 
 		log.info("filteredList() : 호출");
 
-		Slice<Journey> journeys = journeyRepository.searchAll(filteringRequest,
-			pageable, cursorId);
+		Page<Journey> journeys = journeyRepository.searchAll(filteringRequest,
+			pageable);
 
 		List<Journey> journeyList = journeys.getContent();
-		Slice<FilteringResponse> filteringResponses = journeys.map(
+		Page<FilteringResponse> filteringResponses = journeys.map(
 			FilteringResponse::fromEntity);
 
 		if (memberId == null) {
@@ -285,19 +286,20 @@ public class JourneyService {
 			throw new JourneyException(YOU_ARE_NOT_THE_AUTHOR);
 		}
 
-		List<JourneyTheme> journeyThemeTypeList = journeyThemeRepository
-			.findAllByJourneyId(journey.getId());
-
-		List<Place> list = placeRepository.findAllByJourney(journey);
-
-		placeRepository.deleteAll(list);
-		awsS3Service.deleteFile(journey.getJourneyThumbnailUrl());
-		journeyThemeRepository.deleteAll(journeyThemeTypeList);
-		journeyRepository.delete(journey);
+		journeySoftDeleteAndRedisUpload(journey);
 
 		log.info("deleteJourney() : 여정 삭제 완료, journeyId : " + journey.getId());
 		log.info("deleteJourney() : 종료");
 
+	}
+
+	private void journeySoftDeleteAndRedisUpload(Journey journey) {
+		log.info("journeySoftDeleteAndRedisUpload : 여정 소프트 딜리트 시작! (여정 아이디 : " + journey.getId() + ")");
+		journey.setDeleted(true);
+		log.info("journeySoftDeleteAndRedisUpload : 여정 소프트 딜리트 완료!(여정 아이디 : " + journey.getId() + ")");
+		log.info("journeySoftDeleteAndRedisUpload : 여정 id redis upload 시작! (여정 아이디 : " + journey.getId() + ")");
+		redisService.setPlaceId("journeyId", journey.getId());
+		log.info("journeySoftDeleteAndRedisUpload : 여정 id redis upload 종료! (여정 아이디 : " + journey.getId() + ")");
 	}
 
 	@Transactional

@@ -7,7 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import onde.there.domain.Place;
 import onde.there.place.repository.PlaceHeartRepository;
 import onde.there.place.repository.PlaceRepository;
-import onde.there.place.utils.RedisServiceForPlaceHeart;
+import onde.there.utils.RedisServiceForSoftDelete;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,10 +20,10 @@ public class PlaceHeartSchedulingService {
 	private final PlaceHeartRepository placeHeartRepository;
 	private final PlaceRepository placeRepository;
 
-	private final RedisServiceForPlaceHeart<Long> redisService;
-	private static final String PLACE_ID_KEY = "placeId";
+	private final RedisServiceForSoftDelete<Long> redisService;
+	private static final String PLACE_ID_KEY = "placeHeartChangedId";
 
-	@Scheduled(cron = "0 0 3 * * *")
+	@Scheduled(cron = " 0 0 3 * * *")
 	@Transactional
 	public void culPlaceHeartCount() {
 		log.info("culPlaceHeartSum : 저장된 모든 장소 스케줄링 시작!");

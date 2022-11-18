@@ -35,7 +35,7 @@ public class PlaceRepositoryCustomImpl implements PlaceRepositoryCustom {
 				.where(ph.member.id.eq(memberId).and(ph.place.eq(p))).exists()
 				.as("hearted_check"))
 			.from(p)
-			.where(p.journey.id.eq(journeyId))
+			.where(p.journey.id.eq(journeyId).and(p.deleted.eq(false)))
 			.orderBy(p.placeTime.asc())
 			.fetch();
 

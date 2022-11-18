@@ -82,6 +82,7 @@ public class MemberService {
                 });
 
         memberRedisService.delete(key);
+        member.setProfileImageUrl("https://onde-bucket.s3.ap-northeast-2.amazonaws.com/profile-image-default.png");
         memberRepository.save(member);
         return member;
     }

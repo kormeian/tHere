@@ -20,7 +20,7 @@ public class PlaceHeartSchedulingService {
 	private final PlaceHeartRepository placeHeartRepository;
 	private final PlaceRepository placeRepository;
 
-	private final RedisServiceForPlaceHeart<Long> redisService;
+	private final RedisServiceForSoftDelete<Long> redisService;
 	private static final String PLACE_ID_KEY = "placeHeartChangedId";
 
 	@Scheduled(cron = " 0 0 3 * * *")

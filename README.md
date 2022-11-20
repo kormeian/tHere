@@ -1,10 +1,28 @@
-# ONDe
+# <img src="https://user-images.githubusercontent.com/97217822/202672710-0fe1490a-1ff9-4a96-a0e5-386d000102ec.png" alt="ONDe" width="160px">
 
-여행을 하면서 찍은 사진을 여행 별로 저장 및 공유 할 수 있는 서비스입니다.  
-여행 때 다녀온 장소를 지도에 표시하여 여행 경로를 쉽게 파악 할 수 있습니다.  
-사용자는 여행 장소에 대하여 글을 남길 수 있고 댓글을 이용하여 소통을 할 수 있습니다.
+</br>
 
-![image](https://user-images.githubusercontent.com/68500898/201557974-15cb6357-0011-4c6e-88ec-69c35ff00c70.png)
+온데는 두 가지 의미를 지니고 있습니다.
+
+
+1. **와본 곳**(the place I’ve ever been)
+2. **모든 곳**(everywhere, 경상도 사투리)
+
+내가 다녀온 여행을 기록할 수도, 다른 유저의 여행기를 통해 모든 곳을 누벼볼 수도 있는 서비스입니다.
+
+</br>
+
+<img width="1677" alt="capture" src="https://user-images.githubusercontent.com/97217822/202672813-2ac0d27e-a81b-4db4-a1e1-38531544afe6.png">
+
+
+- 여행 별로 글을 작성하고, 해당 여행에서 방문한 장소들을 기록하고 공유할 수 있습니다.
+- 여행 장소에 대한 정보를 기록할 수 있고, 좋아요와 댓글 기능을 통해 다른 유저와 소통할 수 있습니다.
+- 업로드된 장소들은 화면 왼쪽의 지도에 표시되어 여행 경로를 쉽게 파악할 수 있습니다.
+- 키워드 검색과 카테고리 필터링을 통하여 원하는 여행만 찾아볼 수 있습니다.
+
+
+</br>
+
 
 ## 프로젝트 기간
 - 기획: 22.10.7 ~ 22.10.14
@@ -32,10 +50,10 @@
 - 도메인 분석 및 DB 설계
 
 ## Skills & Tools
-## FrontEnd
+### FrontEnd
 <img src="https://img.shields.io/badge/html5-E34F26?style=for-the-badge&logo=html5&logoColor=white"> <img src="https://img.shields.io/badge/css3-1572B6?style=for-the-badge&logo=css3&logoColor=white"> <img src="https://img.shields.io/badge/javascript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=white"> <img src="https://img.shields.io/badge/react-61DAFB?style=for-the-badge&logo=react&logoColor=white"> <img src="https://img.shields.io/badge/styled%20components-DB7093?style=for-the-badge&logo=styled-components&logoColor=white"> <img src="https://img.shields.io/badge/jest-C21325?style=for-the-badge&logo=jest&logoColor=white"> <img src="https://img.shields.io/badge/context API-61DAFB?style=for-the-badge&logo=react&logoColor=white"> <img src="https://img.shields.io/badge/kakao map api-F7DF1E?style=for-the-badge&logo=kakao&logoColor=white">
 
-## BackEnd
+### BackEnd
 ![image](https://user-images.githubusercontent.com/68500898/201881724-6a25061a-9b39-4587-9f36-a5d3f44de3c7.png)
 
 
@@ -134,9 +152,9 @@
 <br><br>
 
 ## Architecture
-![image](https://user-images.githubusercontent.com/68500898/201556520-be86f647-5a86-42d2-9994-4cccaa34e1dc.png)
+![image](https://user-images.githubusercontent.com/90291431/202442851-17badab9-1c67-4ab1-9bdb-b23364de389d.png)
 - 모든 서버는 AWS에 올라가 있습니다.
-- 구동중인 서버: Redis Server, ONDe Server, MySQL(AWS RDS)Server, Amazon S3(이미지 저장소)
+- 구동중인 서버: Redis Server, ONDe Server, Batch Server, MySQL(AWS RDS)Server, Amazon S3(이미지 저장소)
 
 ## CI/CD Pipeline
 ![image](https://user-images.githubusercontent.com/68500898/201556557-b53fa936-8283-4907-b5b3-c6aa3db2563c.png)
@@ -150,4 +168,4 @@
 
 # tHere
 ### [노션 링크](https://www.notion.so/ONDE-17658ae87a9b4ac6b8502b1dc276951d)
-### [ONDe 홈페이지](http://ec2-3-34-2-239.ap-northeast-2.compute.amazonaws.com)
+### [ONDe 홈페이지](http://ec2-13-124-225-159.ap-northeast-2.compute.amazonaws.com)
